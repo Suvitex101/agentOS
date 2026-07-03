@@ -1,0 +1,16 @@
+{
+  "name": "@agentos/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tsconfig/base": "./tsconfig/base.json",
+    "./tsconfig/next": "./tsconfig/next.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
