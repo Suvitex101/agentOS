@@ -7,8 +7,13 @@ It exists to help developers build AI agents that can reason, remember, use
 tools, and operate across real-world workflows such as messaging, payments,
 community management, research, and business operations.
 
-This repository is intentionally starting small. The current work defines the
-project foundation and core domain vocabulary, not the agent runtime.
+This repository is intentionally starting small. The current work provides the
+MVP foundation: shared domain types, a rule-based planner, a simple simulated
+execution engine, an in-memory registry, an in-memory memory store, and agent
+composition helpers.
+
+AgentOS does not yet include `agent.run()`, real connectors, database-backed
+memory, LLM integration, or dashboard functionality.
 
 ## Why AgentOS Exists
 
@@ -24,15 +29,15 @@ and support real operational work.
 
 ```text
 apps/
-  web/          Future dashboard and developer console
+  web/          Next.js app shell for the future dashboard and developer console
 
 packages/
-  core/         Future agent runtime primitives
-  tools/        Future tool definitions and execution helpers
-  memory/       Future memory interfaces and adapters
-  connectors/  Future external service connectors
-  sdk/          Future developer-facing SDK
-  types/        Shared TypeScript types
+  core/         Core planner, execution, registry, and agent composition helpers
+  tools/        Placeholder package for future tool definitions and helpers
+  memory/       Provider-agnostic memory contracts and in-memory store
+  connectors/  Placeholder package for future provider connectors
+  sdk/          Developer-facing SDK exports
+  types/        Shared TypeScript domain and architecture types
   config/       Shared TypeScript configuration
 ```
 
