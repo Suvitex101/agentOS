@@ -6,6 +6,7 @@ export const agentOSSDK = {
 export {
   AgentOSRegistry,
   AgentDefinitionValidationError,
+  LocalCommunityConnector,
   RuleBasedPlanner,
   SimpleExecutionEngine,
   ToolResolver,
@@ -45,6 +46,7 @@ export type {
   ConnectorHealthCheckResult,
   ConnectorInspection,
   ConnectorSummary,
+  ConnectorBundleRegistration,
   CreateTaskInput,
   RuleBasedPlannerOptions,
   SimpleExecutionEngineOptions,

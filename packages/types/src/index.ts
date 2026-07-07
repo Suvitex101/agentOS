@@ -101,6 +101,7 @@ export enum ToolCategory {
 
 export enum CapabilityCategory {
   Messaging = "messaging",
+  Community = "community",
   Payments = "payments",
   Search = "search",
   Scheduling = "scheduling",
@@ -113,7 +114,9 @@ export enum CapabilityCategory {
 }
 
 export enum ResourceType {
+  Community = "community",
   Email = "email",
+  Member = "member",
   Message = "message",
   Document = "document",
   Spreadsheet = "spreadsheet",

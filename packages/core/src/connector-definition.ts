@@ -333,6 +333,7 @@ function addDuplicateErrors(errors: AgentOSError[], entityType: string, ids: str
 function capabilityCategoryFor(capabilityId: string): CapabilityCategory {
   const categories: Record<string, CapabilityCategory> = {
     analytics: CapabilityCategory.Analytics,
+    community: CapabilityCategory.Community,
     communication: CapabilityCategory.Communication,
     messaging: CapabilityCategory.Messaging,
     notifications: CapabilityCategory.Notifications,

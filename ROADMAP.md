@@ -21,13 +21,13 @@ to help.
 - `ToolResolver` and local mock tool execution.
 - Declarative `defineTool()` authoring API.
 - Declarative `defineConnector()` authoring API.
+- `LocalCommunityConnector` bundle and registry bundle lifecycle helpers.
 - Runnable examples.
 - Vitest quality infrastructure.
 - GitHub Actions CI.
 
 ## Next
 
-- First local/mock connector implementation before real providers.
 - LLM provider abstraction that keeps models optional and replaceable.
 - Playground for experimenting with agents, tools, tasks, plans, and traces.
 - Dashboard shell for inspecting agents, registry contents, memory, and runs.

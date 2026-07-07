@@ -48,6 +48,8 @@ export type {
 export { ToolResolver } from "./tool-resolver";
 export type { ToolResolverOptions } from "./tool-resolver";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
+export type { ConnectorBundleRegistration } from "./agentos-registry";
+export { LocalCommunityConnector } from "./local-community-connector";
 export {
   AgentDefinitionValidationError,
   defineAgent,

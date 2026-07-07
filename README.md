@@ -85,6 +85,12 @@ Run the research connector example:
 pnpm example:research-connector
 ```
 
+Run the community connector bundle example:
+
+```bash
+pnpm example:community-connector
+```
+
 Run the local quality gate:
 
 ```bash
@@ -192,6 +198,62 @@ Connector definitions include validation, `inspect()`, and `summary()` helpers.
 Use `defineMessagingConnector()`, `defineResearchConnector()`, or
 `defineBusinessConnector()` when a connector fits a common category.
 
+## Connector Bundles
+
+A connector bundle is a complete installable connector package. It includes:
+
+- the connector definition
+- capabilities exposed by the connector
+- tools provided by the connector
+- local resources owned by the connector
+
+Bundles exist so developers can install and remove a connector consistently
+without manually registering each capability, tool, and resource.
+
+```ts
+import { AgentOSRegistry, LocalCommunityConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+
+registry.registerConnectorBundle(LocalCommunityConnector);
+
+console.log(registry.listCapabilities());
+console.log(registry.listTools());
+
+registry.unregisterConnectorBundle(LocalCommunityConnector.id);
+```
+
+`LocalCommunityConnector` is the first realistic connector bundle. It represents
+a local community platform, not Discord, Slack, Telegram, or any external
+service. It exposes messaging, community, and search capabilities using local
+mock tools and resources.
+
+### Building Your First Connector Bundle
+
+Start with `defineConnector()`, include stable capabilities, attach local tools,
+add representative resources, then let the registry install the full bundle.
+Connector authors should keep local examples mocked and move provider-specific
+API calls behind tools only when real connector implementation begins.
+
+### Connector Lifecycle
+
+1. Define a connector with `defineConnector()`.
+2. Bundle its capabilities, tools, and resources.
+3. Register the bundle with `registry.registerConnectorBundle(connector)`.
+4. Discover tools through `ToolResolver`.
+5. Remove the bundle with `registry.unregisterConnectorBundle(connector.id)`.
+
+Best practices for connector authors:
+
+- keep connector ids stable
+- expose provider-agnostic capabilities
+- avoid network calls inside local examples
+- keep tool ids unique within the registry
+- include realistic local resources for testing and demos
+- use `inspect()` and `summary()` for debugging and documentation
+
+See `examples/community-connector` for a complete local bundle lifecycle.
+
 ## Run An Agent
 
 ```ts
@@ -231,6 +293,7 @@ pnpm example:research
 pnpm example:memory
 pnpm example:custom-tool
 pnpm example:research-connector
+pnpm example:community-connector
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution, and

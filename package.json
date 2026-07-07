@@ -22,7 +22,8 @@
     "example:research": "tsx examples/research-assistant/index.ts",
     "example:memory": "tsx examples/memory-demo/index.ts",
     "example:custom-tool": "tsx examples/custom-tool/index.ts",
-    "example:research-connector": "tsx examples/research-connector/index.ts"
+    "example:research-connector": "tsx examples/research-connector/index.ts",
+    "example:community-connector": "tsx examples/community-connector/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

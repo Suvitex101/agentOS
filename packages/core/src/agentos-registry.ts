@@ -11,14 +11,24 @@ import {
   type RegistryValidationResult,
   type Resource,
 } from "@agentos/types";
-import { defineConnector } from "./connector-definition";
+import { defineConnector, type ConnectorDefinition } from "./connector-definition";
 import { createMockTools } from "./mock-tools";
+
+export interface ConnectorBundleRegistration {
+  connectorId: string;
+  connector: ConnectorManifest;
+  capabilityIds: string[];
+  toolIds: string[];
+  resourceIds: string[];
+  registeredAt: Date;
+}
 
 export class AgentOSRegistry {
   private readonly capabilities = new Map<string, Capability>();
   private readonly connectors = new Map<string, ConnectorManifest>();
   private readonly tools = new Map<string, RegisteredTool>();
   private readonly resources = new Map<string, Resource>();
+  private readonly connectorBundles = new Map<string, ConnectorBundleRegistration>();
 
   registerCapability(capability: Capability): RegistryOperationResult<Capability> {
     return this.register(this.capabilities, capability, "capability");
@@ -34,6 +44,61 @@ export class AgentOSRegistry {
 
   registerResource(resource: Resource): RegistryOperationResult<Resource> {
     return this.register(this.resources, resource, "resource");
+  }
+
+  registerConnectorBundle(
+    connector: ConnectorDefinition
+  ): RegistryOperationResult<ConnectorBundleRegistration> {
+    const validation = this.validateConnectorBundleRegistration(connector);
+
+    if (!validation.success) {
+      return validation;
+    }
+
+    const registeredCapabilityIds: string[] = [];
+    const registeredToolIds: string[] = [];
+    const registeredResourceIds: string[] = [];
+
+    this.connectors.set(connector.id, connector);
+
+    for (const capability of connector.capabilities.capabilities) {
+      if (!this.capabilities.has(capability.id)) {
+        this.capabilities.set(capability.id, capability);
+        registeredCapabilityIds.push(capability.id);
+      }
+    }
+
+    for (const tool of connector.capabilities.tools) {
+      this.tools.set(tool.id, {
+        ...tool,
+        connectorId: connector.id,
+      });
+      registeredToolIds.push(tool.id);
+    }
+
+    for (const resource of connector.resources) {
+      this.resources.set(resource.id, {
+        ...resource,
+        source: connector.id,
+      });
+      registeredResourceIds.push(resource.id);
+    }
+
+    const registration: ConnectorBundleRegistration = Object.freeze({
+      connectorId: connector.id,
+      connector,
+      capabilityIds: Object.freeze(registeredCapabilityIds) as string[],
+      toolIds: Object.freeze(registeredToolIds) as string[],
+      resourceIds: Object.freeze(registeredResourceIds) as string[],
+      registeredAt: new Date(),
+    });
+
+    this.connectorBundles.set(connector.id, registration);
+
+    return {
+      success: true,
+      item: registration,
+    };
   }
 
   unregisterCapability(capabilityId: string): RegistryOperationResult<Capability> {
@@ -52,6 +117,45 @@ export class AgentOSRegistry {
     return this.unregister(this.resources, resourceId, "resource");
   }
 
+  unregisterConnectorBundle(
+    connectorId: string
+  ): RegistryOperationResult<ConnectorBundleRegistration> {
+    const registration = this.connectorBundles.get(connectorId);
+
+    if (!registration) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_bundle_not_found",
+          `Connector bundle "${connectorId}" is not registered.`
+        ),
+      };
+    }
+
+    for (const toolId of registration.toolIds) {
+      this.tools.delete(toolId);
+    }
+
+    for (const resourceId of registration.resourceIds) {
+      this.resources.delete(resourceId);
+    }
+
+    this.connectors.delete(connectorId);
+
+    for (const capabilityId of registration.capabilityIds) {
+      if (!this.isCapabilityReferenced(capabilityId)) {
+        this.capabilities.delete(capabilityId);
+      }
+    }
+
+    this.connectorBundles.delete(connectorId);
+
+    return {
+      success: true,
+      item: registration,
+    };
+  }
+
   findCapabilityById(capabilityId: string): Capability | undefined {
     return this.capabilities.get(capabilityId);
   }
@@ -66,6 +170,10 @@ export class AgentOSRegistry {
 
   findResourceById(resourceId: string): Resource | undefined {
     return this.resources.get(resourceId);
+  }
+
+  findConnectorBundle(connectorId: string): ConnectorBundleRegistration | undefined {
+    return this.connectorBundles.get(connectorId);
   }
 
   findCapabilitiesByCategory(category: CapabilityCategory): Capability[] {
@@ -96,6 +204,10 @@ export class AgentOSRegistry {
 
   listResources(): Resource[] {
     return [...this.resources.values()];
+  }
+
+  listConnectorBundles(): ConnectorBundleRegistration[] {
+    return [...this.connectorBundles.values()];
   }
 
   summary(): RegistrySummary {
@@ -231,6 +343,98 @@ export class AgentOSRegistry {
       item,
     };
   }
+
+  private validateConnectorBundleRegistration(
+    connector: ConnectorDefinition
+  ): RegistryOperationResult<ConnectorBundleRegistration> {
+    const duplicateCapabilityId = findDuplicate(
+      connector.capabilities.capabilities.map((capability) => capability.id)
+    );
+    const duplicateToolId = findDuplicate(connector.capabilities.tools.map((tool) => tool.id));
+    const duplicateResourceId = findDuplicate(connector.resources.map((resource) => resource.id));
+
+    if (this.connectors.has(connector.id) || this.connectorBundles.has(connector.id)) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_duplicate_connector_bundle",
+          `Connector bundle "${connector.id}" is already registered.`
+        ),
+      };
+    }
+
+    if (duplicateCapabilityId) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_duplicate_bundled_capability",
+          `Connector bundle "${connector.id}" includes duplicate capability "${duplicateCapabilityId}".`
+        ),
+      };
+    }
+
+    if (duplicateToolId) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_duplicate_bundled_tool",
+          `Connector bundle "${connector.id}" includes duplicate tool "${duplicateToolId}".`
+        ),
+      };
+    }
+
+    if (duplicateResourceId) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_duplicate_bundled_resource",
+          `Connector bundle "${connector.id}" includes duplicate resource "${duplicateResourceId}".`
+        ),
+      };
+    }
+
+    for (const tool of connector.capabilities.tools) {
+      if (this.tools.has(tool.id)) {
+        return {
+          success: false,
+          error: createRegistryError(
+            "registry_duplicate_bundled_tool",
+            `Tool "${tool.id}" is already registered.`
+          ),
+        };
+      }
+    }
+
+    for (const resource of connector.resources) {
+      if (this.resources.has(resource.id)) {
+        return {
+          success: false,
+          error: createRegistryError(
+            "registry_duplicate_bundled_resource",
+            `Resource "${resource.id}" is already registered.`
+          ),
+        };
+      }
+    }
+
+    return {
+      success: true,
+      item: {
+        connectorId: connector.id,
+        connector,
+        capabilityIds: [],
+        toolIds: [],
+        resourceIds: [],
+        registeredAt: new Date(),
+      },
+    };
+  }
+
+  private isCapabilityReferenced(capabilityId: string): boolean {
+    return [...this.connectors.values()].some((connector) =>
+      connector.capabilities.capabilities.some((capability) => capability.id === capabilityId)
+    );
+  }
 }
 
 export function createAgentOSRegistryBootstrapExample(): AgentOSRegistry {
@@ -343,4 +547,18 @@ function createRegistryError(code: string, message: string): AgentOSError {
 
 function capitalize(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function findDuplicate(values: string[]): string | undefined {
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      return value;
+    }
+
+    seen.add(value);
+  }
+
+  return undefined;
 }
