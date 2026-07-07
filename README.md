@@ -403,6 +403,41 @@ for common setup such as registries, agents, planners, execution engines, memory
 stores, and tasks. Prefer small assertions against behavior and typed results.
 Avoid snapshots unless they add clear value.
 
+## Continuous Integration
+
+GitHub Actions runs the `CI` workflow on pull requests and pushes to `main`.
+The workflow uses Node.js 20, pnpm, and pnpm dependency caching.
+
+CI validates:
+
+- dependency installation with `pnpm install --frozen-lockfile`
+- formatting with `pnpm format:check`
+- TypeScript with `pnpm typecheck`
+- linting with `pnpm lint`
+- tests with `pnpm test`
+- production build with `pnpm build`
+- example verification with `pnpm test:examples`
+
+Before opening a pull request, run the same local quality gate:
+
+```bash
+pnpm format:check
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+pnpm test:examples
+```
+
+Contributor checklist:
+
+- Keep changes scoped to the phase or issue being worked on.
+- Add or update tests for behavior changes.
+- Keep examples runnable when public APIs change.
+- Run the local quality gate before requesting review.
+- Avoid adding external services, secrets, or deployment steps unless a phase
+  explicitly calls for them.
+
 ## Planned Phases
 
 1. Foundation: monorepo, workspace tooling, shared config, and placeholder
@@ -455,4 +490,10 @@ Format the repository:
 
 ```bash
 pnpm format
+```
+
+Check formatting without writing changes:
+
+```bash
+pnpm format:check
 ```

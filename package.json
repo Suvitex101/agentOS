@@ -15,6 +15,7 @@
     "test:examples": "vitest run tests/examples",
     "test:watch": "vitest",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "example:basic": "tsx examples/basic-agent/index.ts",
     "example:community": "tsx examples/community-manager/index.ts",
     "example:business": "tsx examples/business-assistant/index.ts",
