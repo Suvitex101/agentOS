@@ -63,6 +63,34 @@ This keeps the architecture provider-agnostic. A future planner may use an LLM,
 rules, heuristics, another service, or a combination of strategies. The LLM is a
 dependency, not the operating center.
 
+## Models Are Implementation Details
+
+AgentOS treats models as useful dependencies that can appear inside planners,
+tools, or future execution strategies. They are not the primary architectural
+boundary.
+
+This matters because intelligent work systems need to answer questions beyond
+"which model was called?":
+
+- What task was requested?
+- What plan was produced?
+- Which capabilities were available?
+- Which tool was selected?
+- Which connector provided that tool?
+- What happened during execution?
+- What result, trace, and errors were returned?
+
+By making `Task`, `Plan`, `Capability`, `Tool`, `Execution Trace`, and `Result`
+first-class concepts, AgentOS keeps execution understandable even when the
+underlying planner changes. A deterministic planner, an LLM planner, and a
+hybrid planner should all be able to use the same registry, tool, memory, and
+result contracts.
+
+This is also why AgentOS avoids hard-coding provider assumptions into core
+objects. Provider-specific behavior should live behind replaceable components:
+planner strategies, tools, memory providers, connectors, or future execution
+engines.
+
 ## Mission
 
 A `Mission` is a long-running objective that can produce many tasks.

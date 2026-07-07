@@ -21,6 +21,10 @@ integration, database-backed memory, or dashboard functionality.
 
 ## Start Here
 
+- [Vision](VISION.md): why AgentOS exists and why it should be open
+  infrastructure.
+- [Positioning](POSITIONING.md): how AgentOS differs philosophically from other
+  AI frameworks.
 - [Architecture](ARCHITECTURE.md): technical reference for how AgentOS works.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
 - [First Contribution](docs/first-contribution.md): step-by-step onboarding for
@@ -31,13 +35,21 @@ integration, database-backed memory, or dashboard functionality.
 
 ## Why AgentOS Exists
 
-Most agent infrastructure is designed around well-resourced markets, stable
-connectivity, and workflows that do not always reflect how people and businesses
-operate across Africa and the wider Global South.
+AgentOS exists because intelligent work infrastructure should be open,
+provider-agnostic, and organized around tasks rather than any single model or
+provider.
 
-AgentOS aims to provide practical, extensible infrastructure for developers
-building agents that understand local contexts, integrate with regional tools,
-and support real operational work.
+The AI ecosystem is moving quickly, but many systems still couple prompts,
+tools, integrations, memory, and execution patterns tightly together. AgentOS
+separates those concerns into typed, replaceable components so developers can
+build agents that are easier to inspect, extend, test, and port.
+
+Read the deeper documents:
+
+- [VISION.md](VISION.md): why AgentOS deserves to exist as open infrastructure.
+- [POSITIONING.md](POSITIONING.md): how AgentOS compares philosophically with
+  existing AI frameworks.
+- [ARCHITECTURE.md](ARCHITECTURE.md): how the task-centric architecture works.
 
 ## Repository Structure
 
