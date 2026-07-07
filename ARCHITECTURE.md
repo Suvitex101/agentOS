@@ -6,6 +6,9 @@ It is not an LLM framework. It is a task-centric infrastructure layer for
 building agents that can plan, use tools, remember context, and operate across
 real workflows.
 
+For a compact visual overview, see
+[docs/architecture-diagram.md](docs/architecture-diagram.md).
+
 ## Core Flow
 
 ```text

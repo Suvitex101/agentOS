@@ -26,12 +26,19 @@ integration, database-backed memory, or dashboard functionality.
 - [Positioning](POSITIONING.md): how AgentOS differs philosophically from other
   AI frameworks.
 - [Architecture](ARCHITECTURE.md): technical reference for how AgentOS works.
+- [Architecture Diagram](docs/architecture-diagram.md): visual overview of the
+  current local flow.
+- [API Reference](docs/api-reference.md): starter reference for public SDK
+  exports.
+- [Examples](examples): runnable local examples.
+- [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
 - [First Contribution](docs/first-contribution.md): step-by-step onboarding for
   new contributors.
 - [Roadmap](ROADMAP.md): completed work, near-term plans, and aspirational
   future ideas.
 - [Code of Conduct](CODE_OF_CONDUCT.md): community expectations.
+- [License](LICENSE): Apache License 2.0.
 
 ## Why AgentOS Exists
 
@@ -50,6 +57,19 @@ Read the deeper documents:
 - [POSITIONING.md](POSITIONING.md): how AgentOS compares philosophically with
   existing AI frameworks.
 - [ARCHITECTURE.md](ARCHITECTURE.md): how the task-centric architecture works.
+
+## Current Limitations
+
+AgentOS is an early local-first foundation:
+
+- runtime execution is local-first
+- connectors are currently local or mocked
+- no production external provider integrations exist yet
+- no persistent database-backed memory exists yet
+- the dashboard shell is not production-ready yet
+
+See [ROADMAP.md](ROADMAP.md) and [docs/grant/current-capabilities.md](docs/grant/current-capabilities.md)
+for the current implementation boundary.
 
 ## Repository Structure
 
@@ -346,3 +366,7 @@ gentler walkthrough, start with [docs/first-contribution.md](docs/first-contribu
 
 Good first contributions include documentation improvements, focused tests,
 small examples, clearer errors, and small bug fixes.
+
+## License
+
+AgentOS is licensed under the [Apache License 2.0](LICENSE).
