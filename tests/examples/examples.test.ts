@@ -18,6 +18,7 @@ describe("runnable examples", () => {
     ["research", "../../examples/research-assistant/index.ts"],
     ["memory", "../../examples/memory-demo/index.ts"],
     ["custom-tool", "../../examples/custom-tool/index.ts"],
+    ["research-connector", "../../examples/research-connector/index.ts"],
   ])("runs the %s example", async (_name, path) => {
     await expect(import(path)).resolves.toBeDefined();
     expect(process.exitCode).toBeUndefined();

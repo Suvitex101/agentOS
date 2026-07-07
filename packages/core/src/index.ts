@@ -12,6 +12,23 @@ export { SimpleExecutionEngine } from "./simple-execution-engine";
 export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
 export { createMockTools } from "./mock-tools";
 export {
+  ConnectorDefinitionValidationError,
+  defineBusinessConnector,
+  defineConnector,
+  defineMessagingConnector,
+  defineResearchConnector,
+  validateConnectorDefinitionConfig,
+} from "./connector-definition";
+export type {
+  ConnectorDefinition,
+  ConnectorDefinitionConfig,
+  ConnectorDefinitionValidationOptions,
+  ConnectorDefinitionValidationResult,
+  ConnectorHealthCheckResult,
+  ConnectorInspection,
+  ConnectorSummary,
+} from "./connector-definition";
+export {
   ToolDefinitionValidationError,
   defineBusinessTool,
   defineMessagingTool,

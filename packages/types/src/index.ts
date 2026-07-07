@@ -141,6 +141,12 @@ export enum ToolVisibility {
   Internal = "internal",
 }
 
+export enum ConnectorVisibility {
+  Public = "public",
+  Private = "private",
+  Internal = "internal",
+}
+
 export enum ConnectorStatus {
   Draft = "draft",
   Active = "active",

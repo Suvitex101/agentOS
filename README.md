@@ -15,9 +15,9 @@ Mission -> Task -> Planner -> Plan -> Execution Engine -> Tool Resolver -> Regis
 
 The current implementation is local and provider-agnostic. It includes a
 rule-based planner, local execution engine, in-memory registry, in-memory memory
-store, declarative tool authoring API, runnable examples, tests, and CI. It does
-not yet include real connectors, external APIs, LLM provider integration,
-database-backed memory, or dashboard functionality.
+store, declarative tool and connector authoring APIs, runnable examples, tests,
+and CI. It does not yet include real external API calls, LLM provider
+integration, database-backed memory, or dashboard functionality.
 
 ## Start Here
 
@@ -46,7 +46,7 @@ apps/
   web/          Next.js shell for the future dashboard and developer console
 
 packages/
-  core/         Planner, execution, registry, tool authoring, and agent helpers
+  core/         Planner, execution, registry, tool/connector authoring, and agents
   memory/       Memory contracts and in-memory store
   sdk/          Developer-facing exports
   types/        Shared TypeScript domain and architecture types
@@ -77,6 +77,12 @@ Run the custom tool example:
 
 ```bash
 pnpm example:custom-tool
+```
+
+Run the research connector example:
+
+```bash
+pnpm example:research-connector
 ```
 
 Run the local quality gate:
@@ -129,6 +135,63 @@ registry.registerTool(summarizeMessages);
 See [docs/first-contribution.md](docs/first-contribution.md) for a guided
 walkthrough.
 
+## Build Your First Connector
+
+Connectors are local packages of capabilities, tools, and resources. They are
+not API wrappers by themselves. A Discord connector, for example, should expose
+messaging/community/search capabilities and the tools that implement them. Later
+those tools can call real provider APIs, but the connector contract stays
+provider-agnostic.
+
+```text
+Connector -> Capability -> Tool
+```
+
+Define one with `defineConnector()`:
+
+```ts
+import { defineConnector } from "@agentos/sdk";
+import { summarizeMessages, prepareMessage } from "./tools";
+
+export const discord = defineConnector({
+  id: "discord",
+  name: "Discord",
+  version: "1.0.0",
+  description: "Discord community connector.",
+  capabilities: ["messaging", "community", "search"],
+  tools: [summarizeMessages, prepareMessage],
+  resources: [],
+  health() {
+    return {
+      healthy: true,
+    };
+  },
+});
+```
+
+Register connectors, capabilities, tools, and resources with `AgentOSRegistry`.
+The execution engine resolves tools through the registry; it does not know or
+care which connector provided them.
+
+```ts
+registry.registerConnector(discord);
+
+for (const capability of discord.capabilities.capabilities) {
+  registry.registerCapability(capability);
+}
+
+for (const tool of discord.capabilities.tools) {
+  registry.registerTool({
+    ...tool,
+    connectorId: discord.id,
+  });
+}
+```
+
+Connector definitions include validation, `inspect()`, and `summary()` helpers.
+Use `defineMessagingConnector()`, `defineResearchConnector()`, or
+`defineBusinessConnector()` when a connector fits a common category.
+
 ## Run An Agent
 
 ```ts
@@ -167,10 +230,11 @@ pnpm example:business
 pnpm example:research
 pnpm example:memory
 pnpm example:custom-tool
+pnpm example:research-connector
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution, and
-tool authoring API.
+tool/connector authoring APIs.
 
 ## Testing
 

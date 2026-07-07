@@ -20,13 +20,13 @@ to help.
 - `agent.run()` end-to-end local runtime.
 - `ToolResolver` and local mock tool execution.
 - Declarative `defineTool()` authoring API.
+- Declarative `defineConnector()` authoring API.
 - Runnable examples.
 - Vitest quality infrastructure.
 - GitHub Actions CI.
 
 ## Next
 
-- Connector SDK for defining provider integrations consistently.
 - First local/mock connector implementation before real providers.
 - LLM provider abstraction that keeps models optional and replaceable.
 - Playground for experimenting with agents, tools, tasks, plans, and traces.

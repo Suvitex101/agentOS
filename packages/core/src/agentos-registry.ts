@@ -1,6 +1,5 @@
 import {
   CapabilityCategory,
-  ConnectorAuthType,
   ResourceType,
   type AgentOSError,
   type Capability,
@@ -12,6 +11,7 @@ import {
   type RegistryValidationResult,
   type Resource,
 } from "@agentos/types";
+import { defineConnector } from "./connector-definition";
 import { createMockTools } from "./mock-tools";
 
 export class AgentOSRegistry {
@@ -287,37 +287,7 @@ export function createAgentOSRegistryBootstrapExample(): AgentOSRegistry {
     },
   ];
   const tools = createMockTools();
-
-  for (const capability of capabilities) {
-    registry.registerCapability(capability);
-  }
-
-  registry.registerConnector({
-    id: "local-mock-connector",
-    name: "Local Mock Connector",
-    provider: {
-      id: "provider-local-mock",
-      name: "local-mock",
-      displayName: "Local Mock Provider",
-    },
-    version: {
-      current: "0.1.0",
-    },
-    capabilities: {
-      capabilities,
-      tools,
-    },
-    authType: ConnectorAuthType.None,
-  });
-
-  for (const tool of tools) {
-    registry.registerTool({
-      ...tool,
-      connectorId: "local-mock-connector",
-    });
-  }
-
-  registry.registerResource({
+  const demoChannelResource: Resource = {
     id: "resource-local-demo-channel",
     type: ResourceType.Channel,
     source: "local-mock-connector",
@@ -326,7 +296,39 @@ export function createAgentOSRegistryBootstrapExample(): AgentOSRegistry {
       provider: "local-mock",
       name: "demo-channel",
     },
+  };
+  const connector = defineConnector({
+    id: "local-mock-connector",
+    name: "Local Mock Connector",
+    description: "Local connector that exposes mocked AgentOS capabilities for examples.",
+    version: "1.0.0",
+    capabilities,
+    tools,
+    resources: [demoChannelResource],
+    health() {
+      return {
+        healthy: true,
+        metadata: {
+          mode: "local",
+        },
+      };
+    },
   });
+
+  for (const capability of capabilities) {
+    registry.registerCapability(capability);
+  }
+
+  registry.registerConnector(connector);
+
+  for (const tool of tools) {
+    registry.registerTool({
+      ...tool,
+      connectorId: "local-mock-connector",
+    });
+  }
+
+  registry.registerResource(demoChannelResource);
 
   return registry;
 }
