@@ -376,6 +376,33 @@ tool output, result status, trace count, tool call count, memory read count, and
 step summaries. The examples do not call real APIs, real connectors, LLMs,
 databases, or external services.
 
+## Testing
+
+AgentOS uses Vitest for fast local and CI-friendly tests.
+
+```bash
+pnpm test
+pnpm test:unit
+pnpm test:integration
+pnpm test:examples
+pnpm test:watch
+```
+
+The testing strategy favors real framework interactions over heavy mocking:
+
+- Unit tests cover focused contracts such as `defineTool()`, `defineAgent()`,
+  `AgentOSRegistry`, `ToolResolver`, `RuleBasedPlanner`, and
+  `InMemoryMemoryStore`.
+- Integration tests cover the full local runtime path:
+  `Task -> Planner -> Registry -> Resolver -> Tool -> Execution -> Result`.
+- Example tests import every runnable example to make sure contributor-facing
+  demos keep working.
+
+Shared test helpers live in `tests/helpers/`. New tests should use those helpers
+for common setup such as registries, agents, planners, execution engines, memory
+stores, and tasks. Prefer small assertions against behavior and typed results.
+Avoid snapshots unless they add clear value.
+
 ## Planned Phases
 
 1. Foundation: monorepo, workspace tooling, shared config, and placeholder

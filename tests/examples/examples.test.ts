@@ -1,0 +1,25 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+describe("runnable examples", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    process.exitCode = undefined;
+  });
+
+  it.each([
+    ["basic", "../../examples/basic-agent/index.ts"],
+    ["community", "../../examples/community-manager/index.ts"],
+    ["business", "../../examples/business-assistant/index.ts"],
+    ["research", "../../examples/research-assistant/index.ts"],
+    ["memory", "../../examples/memory-demo/index.ts"],
+    ["custom-tool", "../../examples/custom-tool/index.ts"],
+  ])("runs the %s example", async (_name, path) => {
+    await expect(import(path)).resolves.toBeDefined();
+    expect(process.exitCode).toBeUndefined();
+  });
+});

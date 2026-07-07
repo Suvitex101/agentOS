@@ -9,6 +9,11 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:examples": "vitest run tests/examples",
+    "test:watch": "vitest",
     "format": "prettier --write .",
     "example:basic": "tsx examples/basic-agent/index.ts",
     "example:community": "tsx examples/community-manager/index.ts",
@@ -24,6 +29,7 @@
     "turbo": "^2.3.3",
     "tsx": "^4.20.6",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^4.0.15"
   }
 }
