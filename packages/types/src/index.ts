@@ -441,17 +441,13 @@ export interface Planner {
   replan(
     agent: Agent,
     task: Task,
-    plan: Plan,
     context: ExecutionContext,
+    previousPlan: Plan,
     options?: PlannerOptions
   ): Promise<Plan> | Plan;
-  validatePlan(
-    plan: Plan,
-    context: ExecutionContext
-  ): Promise<PlanValidationResult> | PlanValidationResult;
+  validatePlan(plan: Plan): Promise<PlanValidationResult> | PlanValidationResult;
   estimateComplexity(
     task: Task,
-    context: ExecutionContext,
     options?: PlannerOptions
   ): Promise<PlanComplexityEstimate> | PlanComplexityEstimate;
 }

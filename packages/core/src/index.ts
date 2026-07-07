@@ -6,15 +6,18 @@ import {
   type TaskSource,
 } from "@agentos/types";
 
+export { RuleBasedPlanner } from "./rule-based-planner";
+export type { RuleBasedPlannerOptions } from "./rule-based-planner";
+
 export const agentOSCore = {
   name: "@agentos/core",
   description: "Minimal core helpers for AgentOS domain objects.",
 } as const;
 
 export interface CreateTaskInput {
-  id: string;
+  id?: string;
   input: unknown;
-  source: TaskSource;
+  source?: TaskSource;
   priority?: TaskPriority;
   status?: TaskStatus;
   createdAt?: Date;
@@ -26,11 +29,11 @@ export function createTask(input: CreateTaskInput): Task {
   const createdAt = input.createdAt ?? new Date();
 
   return {
-    id: input.id,
+    id: input.id ?? `task-${createdAt.getTime()}`,
     input: input.input,
     status: input.status ?? TaskStatus.Pending,
     priority: input.priority ?? TaskPriority.Normal,
-    source: input.source,
+    source: input.source ?? { type: "unknown" },
     createdAt,
     updatedAt: input.updatedAt ?? createdAt,
     metadata: input.metadata,

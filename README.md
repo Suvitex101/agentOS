@@ -151,6 +151,7 @@ import {
   MemoryScope,
   MemoryType,
   ResourceType,
+  RuleBasedPlanner,
   TaskPriority,
   ToolCategory,
   ToolPermissionLevel,
@@ -218,7 +219,6 @@ const agent: Agent = {
 };
 
 const task = createTask({
-  id: "task-001",
   input: "Find the top complaints from the developer community this week.",
   priority: TaskPriority.High,
   source: {
@@ -256,7 +256,26 @@ const sourceChannel: Resource = {
   source: "discord",
   uri: "discord://guilds/agentos/channels/builders",
 };
+
+const planner = new RuleBasedPlanner();
+const context = {
+  agent,
+  task,
+  memory: [],
+  resources: [sourceChannel],
+  variables: {},
+  environment: {},
+};
+
+const plan = await planner.plan(agent, task, context);
+
+console.log(plan.steps);
 ```
+
+The first planner is intentionally simple. `RuleBasedPlanner` inspects task
+input and deterministically creates a three-step plan for analysis, messaging,
+payment, or default tasks. It does not execute tools, call LLMs, use connectors,
+or write memory.
 
 ## Planned Phases
 
