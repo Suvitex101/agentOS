@@ -152,6 +152,7 @@ import {
   MemoryType,
   ResourceType,
   RuleBasedPlanner,
+  SimpleExecutionEngine,
   TaskPriority,
   ToolCategory,
   ToolPermissionLevel,
@@ -270,12 +271,23 @@ const context = {
 const plan = await planner.plan(agent, task, context);
 
 console.log(plan.steps);
+
+const engine = new SimpleExecutionEngine();
+const result = await engine.executePlan(agent, task, plan, context);
+
+console.log(result.answer);
+console.log(result.trace);
 ```
 
 The first planner is intentionally simple. `RuleBasedPlanner` inspects task
 input and deterministically creates a three-step plan for analysis, messaging,
 payment, or default tasks. It does not execute tools, call LLMs, use connectors,
 or write memory.
+
+The first execution engine is also intentionally minimal. `SimpleExecutionEngine`
+validates the task and plan, processes plan steps in order, simulates step
+outputs, emits trace entries, and returns a structured `Result`. It does not run
+real tools, call connectors, write memory, or perform real-world actions.
 
 ## Planned Phases
 

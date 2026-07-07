@@ -185,6 +185,7 @@ export enum ExecutionEventType {
   TaskFailed = "task_failed",
   PlanningStarted = "planning_started",
   PlanGenerated = "plan_generated",
+  PlanStarted = "plan_started",
   PlanningCompleted = "planning_completed",
   StepStarted = "step_started",
   ToolRequested = "tool_requested",
@@ -487,23 +488,36 @@ export interface ExecutionControlRequest {
   metadata?: AgentOSMetadata;
 }
 
+export interface ExecutionControlResult {
+  executionId: string;
+  accepted: boolean;
+  status: "paused" | "resumed" | "cancelled" | "retry_requested";
+  message: string;
+  metadata?: AgentOSMetadata;
+}
+
 export interface ExecutionEngine {
   id: string;
   name: string;
   executePlan(
+    agent: Agent,
+    task: Task,
     plan: Plan,
     context: ExecutionContext,
     options?: ExecutionOptions
   ): Promise<Result> | Result;
   executeStep(
+    agent: Agent,
+    task: Task,
+    plan: Plan,
     step: PlanStep,
     context: ExecutionContext,
     options?: ExecutionOptions
   ): Promise<PlanStep> | PlanStep;
-  pause(request: ExecutionControlRequest): Promise<void> | void;
-  resume(request: ExecutionControlRequest): Promise<void> | void;
-  cancel(request: ExecutionControlRequest): Promise<void> | void;
-  retry(request: ExecutionControlRequest): Promise<Result> | Result;
+  pause(executionId: string): Promise<ExecutionControlResult> | ExecutionControlResult;
+  resume(executionId: string): Promise<ExecutionControlResult> | ExecutionControlResult;
+  cancel(executionId: string): Promise<ExecutionControlResult> | ExecutionControlResult;
+  retry(executionId: string): Promise<ExecutionControlResult> | ExecutionControlResult;
 }
 
 export interface CapabilityRegistry {
@@ -644,6 +658,7 @@ export interface PlanExecutionEvent extends BaseExecutionEvent {
   type:
     | ExecutionEventType.PlanningStarted
     | ExecutionEventType.PlanGenerated
+    | ExecutionEventType.PlanStarted
     | ExecutionEventType.PlanningCompleted;
   taskId: string;
   plan?: Plan;

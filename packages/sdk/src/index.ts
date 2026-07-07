@@ -3,6 +3,10 @@ export const agentOSSDK = {
   description: "Developer-facing exports for AgentOS.",
 } as const;
 
-export { RuleBasedPlanner, createTask } from "@agentos/core";
-export type { CreateTaskInput, RuleBasedPlannerOptions } from "@agentos/core";
+export { RuleBasedPlanner, SimpleExecutionEngine, createTask } from "@agentos/core";
+export type {
+  CreateTaskInput,
+  RuleBasedPlannerOptions,
+  SimpleExecutionEngineOptions,
+} from "@agentos/core";
 export * from "@agentos/types";

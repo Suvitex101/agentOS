@@ -8,6 +8,8 @@ import {
 
 export { RuleBasedPlanner } from "./rule-based-planner";
 export type { RuleBasedPlannerOptions } from "./rule-based-planner";
+export { SimpleExecutionEngine } from "./simple-execution-engine";
+export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
 
 export const agentOSCore = {
   name: "@agentos/core",
