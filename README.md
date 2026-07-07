@@ -191,6 +191,68 @@ Every tool returns a `ToolExecutionResult` with `success`, `output`, `metadata`,
 trace includes events such as `ToolRequested`, `ToolResolved`, `ToolStarted`,
 `ToolCompleted`, and `ToolFailed`.
 
+## Tool Authoring
+
+Developers can define local tools with `defineTool()`. No classes, decorators,
+reflection, external services, or connectors are required.
+
+```ts
+import { ToolCategory, ToolVisibility, defineTool } from "@agentos/sdk";
+
+export const summarizeMessages = defineTool<{ messages: string[] }, string>({
+  id: "summarize-messages",
+  name: "Summarize Messages",
+  description: "Summarizes community conversations.",
+  capability: "messaging",
+  category: ToolCategory.Community,
+  version: "1.0.0",
+  tags: ["community", "summary"],
+  visibility: ToolVisibility.Public,
+  execute({ input }) {
+    const startedAt = Date.now();
+
+    return {
+      success: true,
+      output: input.messages.join("\n"),
+      metadata: {
+        messageCount: input.messages.length,
+      },
+      durationMs: Date.now() - startedAt,
+      errors: [],
+    };
+  },
+});
+```
+
+`defineTool()` returns an immutable tool definition with:
+
+- `inspect()`: detailed metadata for debugging and documentation.
+- `summary()`: lightweight information for dashboards and catalogs.
+- `execute(input, context)`: the registry-compatible execution function used by
+  the execution engine.
+
+Tool validation checks required `id`, `name`, `capability`, and `execute`
+fields. Versions use simple `x.y.z` semantic version validation. Duplicate IDs
+are rejected by `AgentOSRegistry` during registration, and
+`validateToolDefinitionConfig()` can also check a provided `existingIds` list for
+preflight validation.
+
+Helper factories are available for common capabilities:
+
+```ts
+import { defineBusinessTool, defineMessagingTool, defineResearchTool } from "@agentos/sdk";
+```
+
+These helpers prefill capability and category defaults while still allowing
+overrides. Best practice is to keep tools small, deterministic where possible,
+versioned, tagged, and explicit about metadata and permissions.
+
+Registering a tool is intentionally direct:
+
+```ts
+registry.registerTool(summarizeMessages);
+```
+
 ## Memory Layer
 
 `InMemoryMemoryStore` is the first memory implementation. It is intentionally
@@ -294,6 +356,7 @@ pnpm example:community
 pnpm example:business
 pnpm example:research
 pnpm example:memory
+pnpm example:custom-tool
 ```
 
 Each example creates a registry, memory store, planner, execution engine, and
@@ -305,6 +368,8 @@ agent definition before calling `agent.run()`.
 - `research-assistant`: grant and research planning workflow.
 - `memory-demo`: memory-enabled runs, memory read counts, and a memory-disabled
   run.
+- `custom-tool`: author, register, inspect, summarize, and execute a
+  developer-defined local tool.
 
 Expected output includes the agent name, planner, generated plan, resolved tool,
 tool output, result status, trace count, tool call count, memory read count, and

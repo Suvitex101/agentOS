@@ -11,6 +11,23 @@ export type { RuleBasedPlannerOptions } from "./rule-based-planner";
 export { SimpleExecutionEngine } from "./simple-execution-engine";
 export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
 export { createMockTools } from "./mock-tools";
+export {
+  ToolDefinitionValidationError,
+  defineBusinessTool,
+  defineMessagingTool,
+  defineResearchTool,
+  defineTool,
+  validateToolDefinitionConfig,
+} from "./tool-definition";
+export type {
+  ToolDefinition,
+  ToolDefinitionConfig,
+  ToolDefinitionValidationOptions,
+  ToolDefinitionValidationResult,
+  ToolExecutionContext,
+  ToolInspection,
+  ToolSummary,
+} from "./tool-definition";
 export { ToolResolver } from "./tool-resolver";
 export type { ToolResolverOptions } from "./tool-resolver";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";

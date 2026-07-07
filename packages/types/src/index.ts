@@ -135,6 +135,12 @@ export enum ToolPermissionLevel {
   External = "external",
 }
 
+export enum ToolVisibility {
+  Public = "public",
+  Private = "private",
+  Internal = "internal",
+}
+
 export enum ConnectorStatus {
   Draft = "draft",
   Active = "active",
@@ -327,15 +333,37 @@ export interface ToolExecutionResult<Output = unknown> {
   errors: AgentOSError[];
 }
 
+export interface ToolAuthor {
+  name: string;
+  email?: string;
+  url?: string;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ToolExample<Input = unknown, Output = unknown> {
+  title: string;
+  input?: Input;
+  output?: Output;
+  description?: string;
+  metadata?: AgentOSMetadata;
+}
+
 export interface Tool<Input = unknown, Output = unknown> {
   id: string;
   name: string;
   description: string;
+  version?: string;
   capability: string;
   category: ToolCategory;
+  author?: ToolAuthor;
+  tags?: string[];
+  examples?: ToolExample<Input, Output>[];
+  permissions?: AgentPermission[];
+  visibility?: ToolVisibility;
   inputSchema: AgentOSJSONSchema;
   outputSchema: AgentOSJSONSchema;
   permissionLevel: ToolPermissionLevel;
+  metadata?: AgentOSMetadata;
   execute: (
     input: Input,
     context: ExecutionContext

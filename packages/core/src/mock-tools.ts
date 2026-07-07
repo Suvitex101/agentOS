@@ -2,136 +2,153 @@ import {
   ToolCategory,
   ToolPermissionLevel,
   type AgentOSError,
-  type ExecutionContext,
-  type RegisteredTool,
   type ToolExecutionResult,
 } from "@agentos/types";
+import { defineBusinessTool, defineMessagingTool, defineResearchTool } from "./tool-definition";
 
 type MockToolInput = Record<string, unknown>;
 
-export function createMockTools(): RegisteredTool<unknown, MockToolInput>[] {
+export function createMockTools() {
   return [
-    createMockTool({
+    defineMessagingTool<unknown, MockToolInput>({
       id: "tool-prepare-message",
       name: "PrepareMessageTool",
       description: "Prepares mocked message content for a target channel or recipient.",
-      capability: "messaging",
+      version: "1.0.0",
       capabilityIds: ["messaging", "communication"],
-      category: ToolCategory.Communication,
+      tags: ["messaging", "mock"],
       permissionLevel: ToolPermissionLevel.Write,
-      output: (input) => ({
-        message: `Prepared message for: ${stringifyInput(input.taskInput)}`,
-        status: "draft_ready",
-      }),
+      execute: ({ input }) => {
+        const startedAt = Date.now();
+        const normalizedInput = normalizeToolInput(input);
+
+        return createToolResult({
+          success: true,
+          output: {
+            message: `Prepared message for: ${stringifyInput(normalizedInput.taskInput)}`,
+            status: "draft_ready",
+          },
+          durationMs: Date.now() - startedAt,
+          metadata: {
+            mocked: true,
+            toolId: "tool-prepare-message",
+          },
+        });
+      },
     }),
-    createMockTool({
+    defineMessagingTool<unknown, MockToolInput>({
       id: "tool-summarize-messages",
       name: "SummarizeMessagesTool",
       description: "Summarizes mocked message or community content.",
+      version: "1.0.0",
       capability: "communication",
-      capabilityIds: ["communication", "messaging", "research"],
       category: ToolCategory.Community,
+      capabilityIds: ["communication", "messaging", "research"],
+      tags: ["community", "summary", "mock"],
       permissionLevel: ToolPermissionLevel.Read,
-      output: (input) => ({
-        summary: `Mock summary created for: ${stringifyInput(input.taskInput)}`,
-        findings: ["Top themes identified", "Suggested next action drafted"],
-      }),
+      execute: ({ input }) => {
+        const startedAt = Date.now();
+        const normalizedInput = normalizeToolInput(input);
+
+        return createToolResult({
+          success: true,
+          output: {
+            summary: `Mock summary created for: ${stringifyInput(normalizedInput.taskInput)}`,
+            findings: ["Top themes identified", "Suggested next action drafted"],
+          },
+          durationMs: Date.now() - startedAt,
+          metadata: {
+            mocked: true,
+            toolId: "tool-summarize-messages",
+          },
+        });
+      },
     }),
-    createMockTool({
+    defineResearchTool<unknown, MockToolInput>({
       id: "tool-analyze-text",
       name: "AnalyzeTextTool",
       description: "Analyzes mocked text and returns simple findings.",
+      version: "1.0.0",
       capability: "analytics",
-      capabilityIds: ["analytics", "research"],
       category: ToolCategory.Research,
+      capabilityIds: ["analytics", "research"],
+      tags: ["analysis", "research", "mock"],
       permissionLevel: ToolPermissionLevel.Read,
-      output: (input) => ({
-        analysis: `Mock analysis completed for: ${stringifyInput(input.taskInput)}`,
-        signals: ["intent", "priority", "next_steps"],
-      }),
+      execute: ({ input }) => {
+        const startedAt = Date.now();
+        const normalizedInput = normalizeToolInput(input);
+
+        return createToolResult({
+          success: true,
+          output: {
+            analysis: `Mock analysis completed for: ${stringifyInput(normalizedInput.taskInput)}`,
+            signals: ["intent", "priority", "next_steps"],
+          },
+          durationMs: Date.now() - startedAt,
+          metadata: {
+            mocked: true,
+            toolId: "tool-analyze-text",
+          },
+        });
+      },
     }),
-    createMockTool({
+    defineBusinessTool<unknown, MockToolInput>({
       id: "tool-create-invoice",
       name: "CreateInvoiceTool",
       description: "Creates a mocked invoice or payment workflow.",
+      version: "1.0.0",
       capability: "payments",
-      capabilityIds: ["payments", "business"],
       category: ToolCategory.Payments,
+      capabilityIds: ["payments", "business"],
+      tags: ["payments", "invoice", "mock"],
       permissionLevel: ToolPermissionLevel.Write,
-      output: (input) => ({
-        invoiceId: "mock-invoice-001",
-        paymentStatus: "prepared",
-        note: `Mock payment workflow prepared for: ${stringifyInput(input.taskInput)}`,
-      }),
+      execute: ({ input }) => {
+        const startedAt = Date.now();
+        const normalizedInput = normalizeToolInput(input);
+
+        return createToolResult({
+          success: true,
+          output: {
+            invoiceId: "mock-invoice-001",
+            paymentStatus: "prepared",
+            note: `Mock payment workflow prepared for: ${stringifyInput(normalizedInput.taskInput)}`,
+          },
+          durationMs: Date.now() - startedAt,
+          metadata: {
+            mocked: true,
+            toolId: "tool-create-invoice",
+          },
+        });
+      },
     }),
-    createMockTool({
+    defineResearchTool<unknown, MockToolInput>({
       id: "tool-echo",
       name: "EchoTool",
       description: "Echoes the step input for general mocked execution.",
+      version: "1.0.0",
       capability: "general",
-      capabilityIds: ["general"],
       category: ToolCategory.System,
+      capabilityIds: ["general"],
+      tags: ["general", "mock"],
       permissionLevel: ToolPermissionLevel.Read,
-      output: (input) => ({
-        echo: stringifyInput(input.stepDescription ?? input.taskInput),
-      }),
-    }),
-  ];
-}
+      execute: ({ input }) => {
+        const startedAt = Date.now();
+        const normalizedInput = normalizeToolInput(input);
 
-interface MockToolDefinition {
-  id: string;
-  name: string;
-  description: string;
-  capability: string;
-  capabilityIds: string[];
-  category: ToolCategory;
-  permissionLevel: ToolPermissionLevel;
-  output: (input: MockToolInput, context: ExecutionContext) => MockToolInput;
-}
-
-function createMockTool(definition: MockToolDefinition): RegisteredTool<unknown, MockToolInput> {
-  return {
-    id: definition.id,
-    name: definition.name,
-    description: definition.description,
-    capability: definition.capability,
-    category: definition.category,
-    inputSchema: {
-      type: "object",
-    },
-    outputSchema: {
-      type: "object",
-    },
-    permissionLevel: definition.permissionLevel,
-    capabilityIds: definition.capabilityIds,
-    execute: (input, context) => {
-      const startedAt = Date.now();
-      const normalizedInput = normalizeToolInput(input);
-
-      try {
         return createToolResult({
           success: true,
-          output: definition.output(normalizedInput, context),
+          output: {
+            echo: stringifyInput(normalizedInput.stepDescription ?? normalizedInput.taskInput),
+          },
           durationMs: Date.now() - startedAt,
           metadata: {
             mocked: true,
-            toolId: definition.id,
+            toolId: "tool-echo",
           },
         });
-      } catch (error) {
-        return createToolResult({
-          success: false,
-          durationMs: Date.now() - startedAt,
-          errors: [normalizeToolError(error)],
-          metadata: {
-            mocked: true,
-            toolId: definition.id,
-          },
-        });
-      }
-    },
-  };
+      },
+    }),
+  ];
 }
 
 function normalizeToolInput(input: unknown): MockToolInput {
@@ -151,24 +168,6 @@ function createToolResult<Output>(input: {
     durationMs: input.durationMs,
     errors: input.errors ?? [],
     metadata: input.metadata,
-  };
-}
-
-function normalizeToolError(error: unknown): AgentOSError {
-  if (error && typeof error === "object" && "message" in error) {
-    return {
-      code: "mock_tool_failed",
-      message: String(error.message),
-      details: error,
-      recoverable: true,
-    };
-  }
-
-  return {
-    code: "mock_tool_failed",
-    message: "Mock tool failed.",
-    details: error,
-    recoverable: true,
   };
 }
 

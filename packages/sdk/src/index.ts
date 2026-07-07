@@ -9,12 +9,18 @@ export {
   RuleBasedPlanner,
   SimpleExecutionEngine,
   ToolResolver,
+  ToolDefinitionValidationError,
   createAgentOSRegistryBootstrapExample,
   createAgentDefinitionExamples,
   createAgentRuntimeExamples,
   createMockTools,
   createTask,
+  defineBusinessTool,
+  defineMessagingTool,
+  defineResearchTool,
   defineAgent,
+  defineTool,
+  validateToolDefinitionConfig,
   validateAgentDefinitionConfig,
 } from "@agentos/core";
 export type {
@@ -29,7 +35,14 @@ export type {
   CreateTaskInput,
   RuleBasedPlannerOptions,
   SimpleExecutionEngineOptions,
+  ToolDefinition,
+  ToolDefinitionConfig,
+  ToolDefinitionValidationOptions,
+  ToolDefinitionValidationResult,
+  ToolExecutionContext,
+  ToolInspection,
   ToolResolverOptions,
+  ToolSummary,
 } from "@agentos/core";
 export {
   InMemoryMemoryStore,
