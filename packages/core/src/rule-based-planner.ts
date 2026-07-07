@@ -273,12 +273,12 @@ function matchRule(input: unknown): RuleMatch {
     return "analysis";
   }
 
-  if (hasKeyword(text, MESSAGE_KEYWORDS)) {
-    return "message";
-  }
-
   if (hasKeyword(text, PAYMENT_KEYWORDS)) {
     return "payment";
+  }
+
+  if (hasKeyword(text, MESSAGE_KEYWORDS)) {
+    return "message";
   }
 
   return "default";

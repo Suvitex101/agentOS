@@ -12,8 +12,9 @@ MVP foundation: shared domain types, a rule-based planner, a simple simulated
 execution engine, an in-memory registry, an in-memory memory store, and agent
 composition helpers.
 
-AgentOS does not yet include `agent.run()`, real connectors, database-backed
-memory, LLM integration, or dashboard functionality.
+AgentOS now includes a simulated `agent.run()` path for local development demos.
+It does not yet include real connectors, database-backed memory, LLM
+integration, or dashboard functionality.
 
 ## Why AgentOS Exists
 
@@ -131,8 +132,8 @@ Current concepts:
 - `MemoryStore` and `InMemoryMemoryStore`: provider-agnostic memory contracts
   and a local in-memory implementation for development.
 
-No agent runtime, database-backed memory, real connectors, dashboard, external
-APIs, or LLM calls are implemented yet.
+No database-backed memory, real connectors, dashboard, external APIs, or LLM
+calls are implemented yet.
 
 ## Architectural Contracts
 
@@ -190,7 +191,8 @@ or external storage.
 ## Agent Composition
 
 `defineAgent()` creates an immutable `AgentDefinition` from independent AgentOS
-components. It is dependency injection, not execution.
+components. It is dependency injection first: planners, execution engines,
+registries, and memory stores remain replaceable.
 
 An agent definition wires together:
 
@@ -201,8 +203,16 @@ An agent definition wires together:
 - optional capabilities and permissions
 
 This lets developers replace the planner, memory store, execution engine, or
-registry without changing the agent definition shape. `defineAgent()` does not
-plan tasks, execute plans, call tools, connect providers, or run workflows.
+registry without changing the agent definition shape.
+
+`agent.run()` is the first end-to-end runtime path:
+
+```text
+Input -> Task -> Planner -> Plan -> Execution Engine -> Result
+```
+
+It is still simulated. It does not call real connectors, external APIs, LLMs,
+databases, or real-world tools.
 
 ## Example Usage
 
@@ -400,6 +410,13 @@ const communityManager = defineAgent({
 console.log(communityManager.summary());
 console.log(communityManager.inspect());
 
+const runtimeResult = await communityManager.run(
+  "Summarize the top complaints in our Discord community this week"
+);
+
+console.log(runtimeResult.answer);
+console.log(runtimeResult.trace);
+
 const context = {
   agent,
   task,
@@ -428,6 +445,33 @@ The first execution engine is also intentionally minimal. `SimpleExecutionEngine
 validates the task and plan, processes plan steps in order, simulates step
 outputs, emits trace entries, and returns a structured `Result`. It does not run
 real tools, call connectors, write memory, or perform real-world actions.
+
+## Runnable Examples
+
+The `examples/` directory contains small TypeScript scripts that demonstrate
+the current simulated AgentOS runtime:
+
+```bash
+pnpm example:basic
+pnpm example:community
+pnpm example:business
+pnpm example:research
+pnpm example:memory
+```
+
+Each example creates a registry, memory store, planner, execution engine, and
+agent definition before calling `agent.run()`.
+
+- `basic-agent`: smallest end-to-end setup.
+- `community-manager`: community complaint summary and next-action planning.
+- `business-assistant`: invoice, payment workflow, and follow-up messaging.
+- `research-assistant`: grant and research planning workflow.
+- `memory-demo`: memory-enabled runs, memory read counts, and a memory-disabled
+  run.
+
+Expected output includes the agent name, task, result status, simulated answer,
+trace count, memory read count, and step summaries. The examples do not call
+real APIs, real connectors, LLMs, databases, or external services.
 
 ## Planned Phases
 

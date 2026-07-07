@@ -17,10 +17,14 @@ export {
   validateAgentDefinitionConfig,
 } from "./agent-definition";
 export { createAgentDefinitionExamples } from "./agent-definition.examples";
+export { createAgentRuntimeExamples } from "./agent-runtime.examples";
 export type {
   AgentDefinition,
   AgentDefinitionConfig,
   AgentDefinitionInspection,
+  AgentRunInput,
+  AgentRunOptions,
+  AgentRunTaskInput,
   AgentDefinitionSummary,
   AgentDefinitionValidationResult,
 } from "./agent-definition";
