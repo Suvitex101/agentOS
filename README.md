@@ -81,6 +81,10 @@ flowchart TD
   Planner --> Plan["Plan and steps"]
   Plan --> Engine["Execution engine contract"]
   Engine --> Capability["Capabilities"]
+  Registry["AgentOS Registry: kernel catalog"] --> Capability
+  Registry --> Connector
+  Registry --> Tool
+  Registry --> Resource
   Capability --> Connector["Connectors"]
   Connector --> Tool["Tools"]
   Tool --> Resource["Resources"]
@@ -117,6 +121,8 @@ Current concepts:
   implementations.
 - `CapabilityRegistry`, `ResourceRegistry`, and `ConnectorRegistry`: registry
   interfaces for future runtime discovery.
+- `AgentOSRegistry`: the in-memory kernel catalog for capabilities, connectors,
+  tools, and resources.
 
 No runtime, planner logic, execution engine, memory storage, database,
 connectors, or LLM calls are implemented yet.
@@ -141,11 +147,30 @@ The contracts are intentionally provider-agnostic. Discord, Slack, WhatsApp,
 Gmail, a local file system, a payment provider, or an LLM provider should be
 implementation details behind connectors, tools, or planner strategies.
 
+## Registry Kernel
+
+The first AgentOS kernel component is `AgentOSRegistry`.
+
+It is a central in-memory catalog for discovering what the operating system can
+do and what it can work with:
+
+- Capabilities: provider-independent abilities like messaging or payments.
+- Connectors: provider-backed integrations that expose capabilities and tools.
+- Tools: callable abilities linked to capabilities and optional connector
+  origins.
+- Resources: objects AgentOS can reference, read, write, or act on.
+
+The registry does not execute tools, call external APIs, persist data, or connect
+to providers. It only manages registration, discovery, summaries, and
+relationship validation.
+
 ## Example Usage
 
 ```ts
 import {
+  AgentOSRegistry,
   CapabilityCategory,
+  ConnectorAuthType,
   MissionPriority,
   MissionStatus,
   MemoryScope,
@@ -160,6 +185,7 @@ import {
   type Agent,
   type Capability,
   type Mission,
+  type RegisteredTool,
   type Resource,
   type Tool,
 } from "@agentos/sdk";
@@ -254,9 +280,41 @@ const mission: Mission = {
 const sourceChannel: Resource = {
   id: "resource-discord-builders-channel",
   type: ResourceType.Channel,
-  source: "discord",
+  source: "connector-discord",
   uri: "discord://guilds/agentos/channels/builders",
 };
+
+const registry = new AgentOSRegistry();
+const registeredSearchMessages: RegisteredTool<{ query: string }, { messages: string[] }> = {
+  ...searchMessages,
+  id: "tool-discord-search-messages",
+  capabilityIds: [messaging.id],
+  connectorId: "connector-discord",
+};
+
+registry.registerCapability(messaging);
+registry.registerConnector({
+  id: "connector-discord",
+  name: "Discord",
+  provider: {
+    id: "provider-discord",
+    name: "discord",
+    displayName: "Discord",
+  },
+  version: {
+    current: "0.1.0",
+  },
+  capabilities: {
+    capabilities: [messaging],
+    tools: [registeredSearchMessages],
+  },
+  authType: ConnectorAuthType.OAuth2,
+});
+registry.registerTool(registeredSearchMessages);
+registry.registerResource(sourceChannel);
+
+console.log(registry.findToolsByCapability("capability-messaging"));
+console.log(registry.summary());
 
 const planner = new RuleBasedPlanner();
 const context = {

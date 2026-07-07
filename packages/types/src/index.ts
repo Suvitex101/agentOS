@@ -324,6 +324,13 @@ export interface Tool<Input = unknown, Output = unknown> {
   execute: (input: Input, context: ExecutionContext) => Promise<Output> | Output;
 }
 
+export interface RegisteredTool<Input = never, Output = unknown> extends Tool<Input, Output> {
+  id: string;
+  capabilityIds: string[];
+  connectorId?: string;
+  metadata?: AgentOSMetadata;
+}
+
 export interface Connector {
   id: string;
   name: string;
@@ -348,6 +355,37 @@ export interface Resource {
   source: string;
   uri?: string;
   metadata?: ResourceMetadata;
+}
+
+export interface RegistryOperationResult<T> {
+  success: boolean;
+  item?: T;
+  error?: AgentOSError;
+  metadata?: AgentOSMetadata;
+}
+
+export interface RegistrySummary {
+  capabilities: number;
+  connectors: number;
+  tools: number;
+  resources: number;
+  metadata?: AgentOSMetadata;
+}
+
+export interface RegistryValidationIssue {
+  code: string;
+  message: string;
+  severity: "error" | "warning";
+  entityType: "capability" | "connector" | "tool" | "resource";
+  entityId?: string;
+  metadata?: AgentOSMetadata;
+}
+
+export interface RegistryValidationResult {
+  valid: boolean;
+  issues: RegistryValidationIssue[];
+  summary: RegistrySummary;
+  metadata?: AgentOSMetadata;
 }
 
 export interface MemoryRecord {
@@ -551,7 +589,7 @@ export interface ConnectorVersion {
 
 export interface ConnectorCapabilities {
   capabilities: Capability[];
-  tools: Tool[];
+  tools: RegisteredTool[];
   resources?: ResourceType[];
   metadata?: AgentOSMetadata;
 }
