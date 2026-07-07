@@ -10,6 +10,9 @@ export { RuleBasedPlanner } from "./rule-based-planner";
 export type { RuleBasedPlannerOptions } from "./rule-based-planner";
 export { SimpleExecutionEngine } from "./simple-execution-engine";
 export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
+export { createMockTools } from "./mock-tools";
+export { ToolResolver } from "./tool-resolver";
+export type { ToolResolverOptions } from "./tool-resolver";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 export {
   AgentDefinitionValidationError,

@@ -191,9 +191,12 @@ export enum ExecutionEventType {
   PlanningCompleted = "planning_completed",
   StepStarted = "step_started",
   ToolRequested = "tool_requested",
+  ToolResolved = "tool_resolved",
+  ToolStarted = "tool_started",
   ToolCalled = "tool_called",
   ToolExecuted = "tool_executed",
   ToolCompleted = "tool_completed",
+  ToolFailed = "tool_failed",
   MemoryRead = "memory_read",
   MemoryWrite = "memory_write",
   MemoryWritten = "memory_written",
@@ -316,18 +319,30 @@ export interface PlanStep {
   metadata?: AgentOSMetadata;
 }
 
+export interface ToolExecutionResult<Output = unknown> {
+  success: boolean;
+  output?: Output;
+  metadata?: AgentOSMetadata;
+  durationMs: number;
+  errors: AgentOSError[];
+}
+
 export interface Tool<Input = unknown, Output = unknown> {
+  id: string;
   name: string;
   description: string;
+  capability: string;
   category: ToolCategory;
   inputSchema: AgentOSJSONSchema;
   outputSchema: AgentOSJSONSchema;
   permissionLevel: ToolPermissionLevel;
-  execute: (input: Input, context: ExecutionContext) => Promise<Output> | Output;
+  execute: (
+    input: Input,
+    context: ExecutionContext
+  ) => Promise<ToolExecutionResult<Output>> | ToolExecutionResult<Output>;
 }
 
-export interface RegisteredTool<Input = never, Output = unknown> extends Tool<Input, Output> {
-  id: string;
+export interface RegisteredTool<Input = unknown, Output = unknown> extends Tool<Input, Output> {
   capabilityIds: string[];
   connectorId?: string;
   metadata?: AgentOSMetadata;
@@ -526,6 +541,7 @@ export interface HybridPlannerStrategy extends PlannerStrategy {
 export interface ExecutionOptions {
   timeoutMs?: number;
   dryRun?: boolean;
+  toolResolver?: ToolResolver;
   metadata?: AgentOSMetadata;
 }
 
@@ -639,12 +655,36 @@ export interface ConnectorRegistry {
   getConnectorHealth(connectorId: string): Promise<ConnectorHealth> | ConnectorHealth;
 }
 
+export interface ToolResolutionRequest {
+  capability?: string;
+  capabilityId?: string;
+  toolId?: string;
+  stepType?: PlanStepType;
+  step?: PlanStep;
+  task?: Task;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ToolResolutionResult {
+  success: boolean;
+  tool?: RegisteredTool;
+  reason?: string;
+  errors: AgentOSError[];
+  metadata?: AgentOSMetadata;
+}
+
+export interface ToolResolver {
+  resolve(request: ToolResolutionRequest): ToolResolutionResult;
+}
+
 export interface ToolCallRecord {
   id: string;
+  toolId?: string;
   toolName: string;
   stepId?: string;
   input?: unknown;
   output?: unknown;
+  success?: boolean;
   error?: AgentOSError;
   startedAt: Date;
   completedAt?: Date;
@@ -726,9 +766,12 @@ export interface StepExecutionEvent extends BaseExecutionEvent {
 export interface ToolExecutionEvent extends BaseExecutionEvent {
   type:
     | ExecutionEventType.ToolRequested
+    | ExecutionEventType.ToolResolved
+    | ExecutionEventType.ToolStarted
     | ExecutionEventType.ToolCalled
     | ExecutionEventType.ToolExecuted
-    | ExecutionEventType.ToolCompleted;
+    | ExecutionEventType.ToolCompleted
+    | ExecutionEventType.ToolFailed;
   taskId: string;
   toolName: string;
   toolCall?: ToolCallRecord;

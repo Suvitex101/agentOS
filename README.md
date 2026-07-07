@@ -8,12 +8,12 @@ tools, and operate across real-world workflows such as messaging, payments,
 community management, research, and business operations.
 
 This repository is intentionally starting small. The current work provides the
-MVP foundation: shared domain types, a rule-based planner, a simple simulated
-execution engine, an in-memory registry, an in-memory memory store, and agent
-composition helpers.
+MVP foundation: shared domain types, a rule-based planner, a resolver-driven
+execution engine, an in-memory registry, local mock tools, an in-memory memory
+store, and agent composition helpers.
 
-AgentOS now includes a simulated `agent.run()` path for local development demos.
-It does not yet include real connectors, database-backed memory, LLM
+AgentOS now includes an end-to-end local `agent.run()` path for development
+demos. It does not yet include real connectors, database-backed memory, LLM
 integration, or dashboard functionality.
 
 ## Why AgentOS Exists
@@ -172,6 +172,25 @@ The registry does not execute tools, call external APIs, persist data, or connec
 to providers. It only manages registration, discovery, summaries, and
 relationship validation.
 
+## Tool Execution
+
+Phase 11 introduces the first real capability execution path. The execution
+engine no longer creates generic fake step output by itself. Instead, it uses a
+`ToolResolver` to discover tools from `AgentOSRegistry`.
+
+```text
+Task -> Planner -> Plan -> Execution Engine -> Tool Resolver -> Registry -> Tool -> Tool Result
+```
+
+The resolver can match tools by explicit tool id, required capability, step
+type, and step description. The execution engine remains independent from
+concrete tools.
+
+Every tool returns a `ToolExecutionResult` with `success`, `output`, `metadata`,
+`durationMs`, and `errors`. The final `Result` includes `toolCalls`, and the
+trace includes events such as `ToolRequested`, `ToolResolved`, `ToolStarted`,
+`ToolCompleted`, and `ToolFailed`.
+
 ## Memory Layer
 
 `InMemoryMemoryStore` is the first memory implementation. It is intentionally
@@ -205,235 +224,43 @@ An agent definition wires together:
 This lets developers replace the planner, memory store, execution engine, or
 registry without changing the agent definition shape.
 
-`agent.run()` is the first end-to-end runtime path:
+`agent.run()` is the first end-to-end local runtime path:
 
 ```text
-Input -> Task -> Planner -> Plan -> Execution Engine -> Result
+Input -> Task -> Planner -> Plan -> Execution Engine -> Tool Resolver -> Registry -> Tool -> Result
 ```
 
-It is still simulated. It does not call real connectors, external APIs, LLMs,
-databases, or real-world tools.
+It executes local mock tools through the registry. It does not call real
+connectors, external APIs, LLMs, databases, or real-world services.
 
 ## Example Usage
 
 ```ts
 import {
-  AgentOSRegistry,
-  CapabilityCategory,
-  ConnectorAuthType,
   InMemoryMemoryStore,
-  MissionPriority,
-  MissionStatus,
-  MemoryScope,
-  MemoryType,
-  ResourceType,
   RuleBasedPlanner,
   SimpleExecutionEngine,
-  TaskPriority,
-  ToolCategory,
-  ToolPermissionLevel,
-  createTask,
+  createAgentOSRegistryBootstrapExample,
   defineAgent,
-  type Agent,
-  type Capability,
-  type Mission,
-  type RegisteredTool,
-  type Resource,
-  type Tool,
 } from "@agentos/sdk";
 
-const messaging: Capability = {
-  id: "capability-messaging",
-  name: "Messaging",
-  description: "Read and act on messages across provider-backed channels.",
-  category: CapabilityCategory.Messaging,
-  supportedConnectors: ["discord", "slack", "whatsapp"],
-};
-
-const searchMessages: Tool<{ query: string }, { messages: string[] }> = {
-  name: "searchMessages",
-  description: "Search messages exposed by a connector.",
-  category: ToolCategory.Communication,
-  inputSchema: {
-    type: "object",
-    properties: {
-      query: { type: "string" },
-    },
-    required: ["query"],
-  },
-  outputSchema: {
-    type: "object",
-    properties: {
-      messages: {
-        type: "array",
-        items: { type: "string" },
-      },
-    },
-  },
-  permissionLevel: ToolPermissionLevel.Read,
-  execute: async () => {
-    throw new Error("Tool execution is not implemented in the architecture phase.");
-  },
-};
-
-const agent: Agent = {
-  id: "agent-community-ops",
-  name: "Community Ops Agent",
-  description: "Helps community teams understand and respond to member needs.",
-  version: "0.1.0",
-  capabilities: [{ name: "community-research" }],
-  tools: [searchMessages],
-  memoryPolicy: {
-    enabled: true,
-    scopes: [MemoryScope.User, MemoryScope.Organization],
-    readableTypes: [MemoryType.Fact, MemoryType.Summary],
-    writableTypes: [MemoryType.Summary],
-  },
-  permissions: [
-    {
-      resource: "messages",
-      level: ToolPermissionLevel.Read,
-    },
-  ],
-};
-
-const task = createTask({
-  input: "Find the top complaints from the developer community this week.",
-  priority: TaskPriority.High,
-  source: {
-    type: "api",
-    name: "developer-dashboard",
-    userId: "user-001",
-    organizationId: "org-001",
-  },
-  metadata: {
-    region: "Africa",
-  },
-});
-
-const mission: Mission = {
-  id: "mission-community-growth",
-  title: "Grow developer community",
-  description: "Increase community engagement and retention this month.",
-  objective: "Grow my Discord community by 30% this month.",
-  status: MissionStatus.Active,
-  priority: MissionPriority.High,
-  owner: {
-    id: "org-001",
-    type: "organization",
-    name: "AgentOS",
-  },
-  tasks: [task],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  deadline: new Date("2026-08-01T00:00:00.000Z"),
-};
-
-const sourceChannel: Resource = {
-  id: "resource-discord-builders-channel",
-  type: ResourceType.Channel,
-  source: "connector-discord",
-  uri: "discord://guilds/agentos/channels/builders",
-};
-
-const registry = new AgentOSRegistry();
-const registeredSearchMessages: RegisteredTool<{ query: string }, { messages: string[] }> = {
-  ...searchMessages,
-  id: "tool-discord-search-messages",
-  capabilityIds: [messaging.id],
-  connectorId: "connector-discord",
-};
-
-registry.registerCapability(messaging);
-registry.registerConnector({
-  id: "connector-discord",
-  name: "Discord",
-  provider: {
-    id: "provider-discord",
-    name: "discord",
-    displayName: "Discord",
-  },
-  version: {
-    current: "0.1.0",
-  },
-  capabilities: {
-    capabilities: [messaging],
-    tools: [registeredSearchMessages],
-  },
-  authType: ConnectorAuthType.OAuth2,
-});
-registry.registerTool(registeredSearchMessages);
-registry.registerResource(sourceChannel);
-
-console.log(registry.findToolsByCapability("capability-messaging"));
-console.log(registry.summary());
-
-const memory = new InMemoryMemoryStore();
-const memoryWrite = memory.write({
-  content: "The user is building AgentOS for open-source AI agents in Africa.",
-  type: MemoryType.Fact,
-  scope: {
-    type: MemoryScope.Project,
-    id: "agentos",
-  },
-});
-const memories = memory.search({
-  query: "Africa agents",
-  scope: {
-    type: MemoryScope.Project,
-    id: "agentos",
-  },
-});
-
-console.log(memoryWrite.record);
-console.log(memories);
-
-const planner = new RuleBasedPlanner();
-const execution = new SimpleExecutionEngine();
 const communityManager = defineAgent({
   id: "community-manager",
   name: "Community Manager",
   description: "Manages online communities.",
-  planner,
-  executionEngine: execution,
-  registry,
-  memoryStore: memory,
-  capabilities: [{ name: "community-management" }],
-  permissions: [
-    {
-      resource: "messages",
-      level: ToolPermissionLevel.Read,
-    },
-  ],
+  planner: new RuleBasedPlanner(),
+  executionEngine: new SimpleExecutionEngine(),
+  registry: createAgentOSRegistryBootstrapExample(),
+  memoryStore: new InMemoryMemoryStore(),
 });
 
-console.log(communityManager.summary());
-console.log(communityManager.inspect());
-
-const runtimeResult = await communityManager.run(
+const result = await communityManager.run(
   "Summarize the top complaints in our Discord community this week"
 );
 
-console.log(runtimeResult.answer);
-console.log(runtimeResult.trace);
-
-const context = {
-  agent,
-  task,
-  memory: [],
-  resources: [sourceChannel],
-  variables: {},
-  environment: {},
-};
-
-const plan = await planner.plan(agent, task, context);
-
-console.log(plan.steps);
-
-const result = await execution.executePlan(agent, task, plan, context);
-
 console.log(result.answer);
 console.log(result.trace);
+console.log(result.toolCalls);
 ```
 
 The first planner is intentionally simple. `RuleBasedPlanner` inspects task
@@ -441,15 +268,25 @@ input and deterministically creates a three-step plan for analysis, messaging,
 payment, or default tasks. It does not execute tools, call LLMs, use connectors,
 or write memory.
 
-The first execution engine is also intentionally minimal. `SimpleExecutionEngine`
-validates the task and plan, processes plan steps in order, simulates step
-outputs, emits trace entries, and returns a structured `Result`. It does not run
-real tools, call connectors, write memory, or perform real-world actions.
+`SimpleExecutionEngine` validates the task and plan, asks `ToolResolver` to find
+registered tools, executes local mock tools, records `toolCalls`, emits typed
+tool traces, and returns a structured `Result`.
+
+The current mock tools are:
+
+- `PrepareMessageTool`
+- `SummarizeMessagesTool`
+- `AnalyzeTextTool`
+- `CreateInvoiceTool`
+- `EchoTool`
+
+These tools are local and deterministic. Future real connectors can replace the
+mock tools behind the same registry and resolver shape.
 
 ## Runnable Examples
 
 The `examples/` directory contains small TypeScript scripts that demonstrate
-the current simulated AgentOS runtime:
+the current local AgentOS runtime:
 
 ```bash
 pnpm example:basic
@@ -469,9 +306,10 @@ agent definition before calling `agent.run()`.
 - `memory-demo`: memory-enabled runs, memory read counts, and a memory-disabled
   run.
 
-Expected output includes the agent name, task, result status, simulated answer,
-trace count, memory read count, and step summaries. The examples do not call
-real APIs, real connectors, LLMs, databases, or external services.
+Expected output includes the agent name, planner, generated plan, resolved tool,
+tool output, result status, trace count, tool call count, memory read count, and
+step summaries. The examples do not call real APIs, real connectors, LLMs,
+databases, or external services.
 
 ## Planned Phases
 

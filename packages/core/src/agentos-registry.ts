@@ -2,8 +2,6 @@ import {
   CapabilityCategory,
   ConnectorAuthType,
   ResourceType,
-  ToolCategory,
-  ToolPermissionLevel,
   type AgentOSError,
   type Capability,
   type ConnectorManifest,
@@ -14,6 +12,7 @@ import {
   type RegistryValidationResult,
   type Resource,
 } from "@agentos/types";
+import { createMockTools } from "./mock-tools";
 
 export class AgentOSRegistry {
   private readonly capabilities = new Map<string, Capability>();
@@ -236,97 +235,96 @@ export class AgentOSRegistry {
 
 export function createAgentOSRegistryBootstrapExample(): AgentOSRegistry {
   const registry = new AgentOSRegistry();
-  const messagingCapability: Capability = {
-    id: "capability-messaging",
-    name: "Messaging",
-    description: "Read, search, and post messages across provider-backed channels.",
-    category: CapabilityCategory.Messaging,
-    supportedConnectors: ["connector-discord"],
-  };
+  const capabilities: Capability[] = [
+    {
+      id: "messaging",
+      name: "Messaging",
+      description: "Prepare and route messages through mocked local tools.",
+      category: CapabilityCategory.Messaging,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "communication",
+      name: "Communication",
+      description: "Summarize, draft, and present communication output.",
+      category: CapabilityCategory.Communication,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "research",
+      name: "Research",
+      description: "Analyze text and gather local mocked research signals.",
+      category: CapabilityCategory.Research,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "analytics",
+      name: "Analytics",
+      description: "Produce local mocked analysis outputs.",
+      category: CapabilityCategory.Analytics,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "payments",
+      name: "Payments",
+      description: "Prepare mocked invoice and payment workflows.",
+      category: CapabilityCategory.Payments,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "business",
+      name: "Business",
+      description: "Support local mocked business operations.",
+      category: CapabilityCategory.Custom,
+      supportedConnectors: ["local-mock-connector"],
+    },
+    {
+      id: "general",
+      name: "General",
+      description: "Fallback local mocked execution capability.",
+      category: CapabilityCategory.Custom,
+      supportedConnectors: ["local-mock-connector"],
+    },
+  ];
+  const tools = createMockTools();
 
-  const searchMessagesTool: RegisteredTool<{ query: string }, { messages: string[] }> = {
-    id: "tool-discord-search-messages",
-    name: "searchMessages",
-    description: "Mocked Discord message search tool.",
-    category: ToolCategory.Communication,
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: { type: "string" },
-      },
-      required: ["query"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        messages: {
-          type: "array",
-          items: { type: "string" },
-        },
-      },
-    },
-    permissionLevel: ToolPermissionLevel.Read,
-    capabilityIds: [messagingCapability.id],
-    connectorId: "connector-discord",
-    execute: () => ({ messages: [] }),
-  };
+  for (const capability of capabilities) {
+    registry.registerCapability(capability);
+  }
 
-  const postMessageTool: RegisteredTool<
-    { channelId: string; content: string },
-    { messageId: string }
-  > = {
-    id: "tool-discord-post-message",
-    name: "postMessage",
-    description: "Mocked Discord message posting tool.",
-    category: ToolCategory.Communication,
-    inputSchema: {
-      type: "object",
-      properties: {
-        channelId: { type: "string" },
-        content: { type: "string" },
-      },
-      required: ["channelId", "content"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        messageId: { type: "string" },
-      },
-    },
-    permissionLevel: ToolPermissionLevel.Write,
-    capabilityIds: [messagingCapability.id],
-    connectorId: "connector-discord",
-    execute: () => ({ messageId: "mock-message-id" }),
-  };
-
-  registry.registerCapability(messagingCapability);
   registry.registerConnector({
-    id: "connector-discord",
-    name: "Discord",
+    id: "local-mock-connector",
+    name: "Local Mock Connector",
     provider: {
-      id: "provider-discord",
-      name: "discord",
-      displayName: "Discord",
+      id: "provider-local-mock",
+      name: "local-mock",
+      displayName: "Local Mock Provider",
     },
     version: {
       current: "0.1.0",
     },
     capabilities: {
-      capabilities: [messagingCapability],
-      tools: [searchMessagesTool, postMessageTool],
+      capabilities,
+      tools,
     },
-    authType: ConnectorAuthType.OAuth2,
+    authType: ConnectorAuthType.None,
   });
-  registry.registerTool(searchMessagesTool);
-  registry.registerTool(postMessageTool);
+
+  for (const tool of tools) {
+    registry.registerTool({
+      ...tool,
+      connectorId: "local-mock-connector",
+    });
+  }
+
   registry.registerResource({
-    id: "resource-discord-builders-channel",
+    id: "resource-local-demo-channel",
     type: ResourceType.Channel,
-    source: "connector-discord",
-    uri: "discord://guilds/agentos/channels/builders",
+    source: "local-mock-connector",
+    uri: "local://agentos/demo-channel",
     metadata: {
-      provider: "discord",
-      name: "builders",
+      provider: "local-mock",
+      name: "demo-channel",
     },
   });
 

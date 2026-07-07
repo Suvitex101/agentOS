@@ -13,8 +13,11 @@ import {
   type ExecutionTrace,
   type Plan,
   type PlanStep,
+  type RegisteredTool,
   type Result,
   type Task,
+  type ToolCallRecord,
+  type ToolExecutionResult,
 } from "@agentos/types";
 
 export interface SimpleExecutionEngineOptions {
@@ -31,17 +34,18 @@ export class SimpleExecutionEngine implements ExecutionEngine {
     this.name = options.name ?? "SimpleExecutionEngine";
   }
 
-  executePlan(
+  async executePlan(
     agent: Agent,
     task: Task,
     plan: Plan,
     context: ExecutionContext,
     options?: ExecutionOptions
-  ): Result {
+  ): Promise<Result> {
     const startedAt = new Date();
     const executionId = createExecutionId(task, plan, startedAt);
     const trace: ExecutionTrace[] = [];
     const errors = validateExecutionInput(task, plan);
+    const toolCalls: ToolCallRecord[] = [];
 
     const runningTask: Task = {
       ...task,
@@ -91,6 +95,7 @@ export class SimpleExecutionEngine implements ExecutionEngine {
         status: ResultStatus.Failed,
         plan,
         trace,
+        toolCalls,
         errors,
         startedAt,
         completedAt,
@@ -115,145 +120,102 @@ export class SimpleExecutionEngine implements ExecutionEngine {
     );
 
     const completedSteps: PlanStep[] = [];
+    const executionErrors: AgentOSError[] = [];
 
-    try {
-      for (const step of runningPlan.steps) {
-        trace.push(
-          createTrace(ExecutionEventType.StepStarted, {
-            stepId: step.id,
-            input: step.input ?? step.description,
-            metadata: {
-              executionId,
-              taskId: task.id,
-              planId: plan.id,
-              order: step.order,
-            },
-          })
-        );
-
-        const completedStep = this.executeStep(
-          agent,
-          runningTask,
-          runningPlan,
-          step,
-          executionContext,
-          options
-        );
-
-        completedSteps.push(completedStep);
-
-        trace.push(
-          createTrace(ExecutionEventType.StepCompleted, {
-            stepId: completedStep.id,
-            input: completedStep.input ?? completedStep.description,
-            output: completedStep.output,
-            metadata: {
-              executionId,
-              taskId: task.id,
-              planId: plan.id,
-              order: completedStep.order,
-            },
-          })
-        );
-      }
-
-      const completedAt = new Date();
-      const completedPlan: Plan = {
-        ...runningPlan,
-        status: PlanStatus.Completed,
-        steps: completedSteps,
-        updatedAt: completedAt,
-      };
-
+    for (const step of runningPlan.steps) {
       trace.push(
-        createTrace(ExecutionEventType.TaskCompleted, {
-          output: completedSteps.map((step) => step.output),
+        createTrace(ExecutionEventType.StepStarted, {
+          stepId: step.id,
+          input: step.input ?? step.description,
           metadata: {
             executionId,
             taskId: task.id,
             planId: plan.id,
+            order: step.order,
           },
         })
       );
 
-      return createResult({
-        taskId: task.id,
-        status: ResultStatus.Completed,
-        plan: completedPlan,
-        trace,
-        errors: [],
-        startedAt,
-        completedAt,
-        answer: createAnswer(completedSteps),
-        metadata: {
-          executionId,
-          engine: this.name,
-          dryRun: options?.dryRun ?? false,
-          simulated: true,
-        },
+      const stepExecution = await executeStepWithResolver({
+        agent,
+        task: runningTask,
+        plan: runningPlan,
+        step,
+        context: executionContext,
+        options,
+        executionId,
+        engineName: this.name,
       });
-    } catch (error) {
-      const completedAt = new Date();
-      const agentError = normalizeError(error);
 
-      trace.push(
-        createTrace(ExecutionEventType.StepFailed, {
-          error: agentError,
-          metadata: {
-            executionId,
-            taskId: task.id,
-            planId: plan.id,
-          },
-        })
-      );
-
-      trace.push(
-        createTrace(ExecutionEventType.TaskFailed, {
-          error: agentError,
-          metadata: {
-            executionId,
-            taskId: task.id,
-            planId: plan.id,
-          },
-        })
-      );
-
-      return createResult({
-        taskId: task.id,
-        status: ResultStatus.Failed,
-        plan: {
-          ...runningPlan,
-          status: PlanStatus.Failed,
-          steps: completedSteps,
-          updatedAt: completedAt,
-        },
-        trace,
-        errors: [agentError],
-        startedAt,
-        completedAt,
-        answer: "Execution failed during simulated step processing.",
-        metadata: {
-          executionId,
-          engine: this.name,
-          simulated: true,
-        },
-      });
+      completedSteps.push(stepExecution.step);
+      trace.push(...stepExecution.trace);
+      toolCalls.push(...stepExecution.toolCalls);
+      executionErrors.push(...stepExecution.errors);
     }
+
+    const completedAt = new Date();
+    const failed = executionErrors.length > 0;
+    const completedPlan: Plan = {
+      ...runningPlan,
+      status: failed ? PlanStatus.Failed : PlanStatus.Completed,
+      steps: completedSteps,
+      updatedAt: completedAt,
+    };
+
+    trace.push(
+      createTrace(failed ? ExecutionEventType.TaskFailed : ExecutionEventType.TaskCompleted, {
+        output: completedSteps.map((step) => step.output),
+        error: executionErrors[0],
+        metadata: {
+          executionId,
+          taskId: task.id,
+          planId: plan.id,
+          toolCallCount: toolCalls.length,
+        },
+      })
+    );
+
+    return createResult({
+      taskId: task.id,
+      status: failed ? ResultStatus.Failed : ResultStatus.Completed,
+      plan: completedPlan,
+      trace,
+      toolCalls,
+      errors: executionErrors,
+      startedAt,
+      completedAt,
+      answer: createAnswer(completedSteps),
+      metadata: {
+        executionId,
+        engine: this.name,
+        dryRun: options?.dryRun ?? false,
+        simulated: false,
+        localMockTools: true,
+        toolCallCount: toolCalls.length,
+      },
+    });
   }
 
-  executeStep(
-    _agent: Agent,
-    _task: Task,
-    _plan: Plan,
+  async executeStep(
+    agent: Agent,
+    task: Task,
+    plan: Plan,
     step: PlanStep,
-    _context: ExecutionContext,
-    _options?: ExecutionOptions
-  ): PlanStep {
-    return {
-      ...step,
-      status: PlanStepStatus.Completed,
-      output: simulateStepOutput(step),
-    };
+    context: ExecutionContext,
+    options?: ExecutionOptions
+  ): Promise<PlanStep> {
+    const execution = await executeStepWithResolver({
+      agent,
+      task,
+      plan,
+      step,
+      context,
+      options,
+      executionId: createExecutionId(task, plan, new Date()),
+      engineName: this.name,
+    });
+
+    return execution.step;
   }
 
   pause(executionId: string): ExecutionControlResult {
@@ -289,16 +251,244 @@ export class SimpleExecutionEngine implements ExecutionEngine {
   }
 }
 
+interface StepExecutionInput {
+  agent: Agent;
+  task: Task;
+  plan: Plan;
+  step: PlanStep;
+  context: ExecutionContext;
+  options?: ExecutionOptions;
+  executionId: string;
+  engineName: string;
+}
+
+interface StepExecutionOutput {
+  step: PlanStep;
+  trace: ExecutionTrace[];
+  toolCalls: ToolCallRecord[];
+  errors: AgentOSError[];
+}
+
 interface ResultInput {
   taskId: string;
   status: ResultStatus;
   answer: unknown;
   plan: Plan;
   trace: ExecutionTrace[];
+  toolCalls: ToolCallRecord[];
   errors: AgentOSError[];
   startedAt: Date;
   completedAt: Date;
   metadata?: Record<string, unknown>;
+}
+
+async function executeStepWithResolver(input: StepExecutionInput): Promise<StepExecutionOutput> {
+  const trace: ExecutionTrace[] = [];
+  const toolCalls: ToolCallRecord[] = [];
+  const errors: AgentOSError[] = [];
+  const requiredCapability = getRequiredCapability(input.step);
+
+  trace.push(
+    createTrace(ExecutionEventType.ToolRequested, {
+      stepId: input.step.id,
+      input: {
+        capability: requiredCapability,
+        toolId: input.step.requiredTool,
+        stepType: input.step.type,
+      },
+      metadata: {
+        executionId: input.executionId,
+        taskId: input.task.id,
+        planId: input.plan.id,
+      },
+    })
+  );
+
+  if (!input.options?.toolResolver) {
+    const error = createExecutionError(
+      "execution_missing_tool_resolver",
+      "Execution requires a ToolResolver."
+    );
+
+    trace.push(createFailedToolTrace(input, error), createFailedStepTrace(input, error));
+    errors.push(error);
+
+    return {
+      step: failStep(input.step, error),
+      trace,
+      toolCalls,
+      errors,
+    };
+  }
+
+  const resolution = input.options.toolResolver.resolve({
+    capability: requiredCapability,
+    toolId: input.step.requiredTool,
+    stepType: input.step.type,
+    step: input.step,
+    task: input.task,
+  });
+
+  if (!resolution.success || !resolution.tool) {
+    const error =
+      resolution.errors[0] ??
+      createExecutionError("execution_tool_not_found", "No registered tool matched the step.");
+
+    trace.push(createFailedToolTrace(input, error), createFailedStepTrace(input, error));
+    errors.push(error);
+
+    return {
+      step: failStep(input.step, error),
+      trace,
+      toolCalls,
+      errors,
+    };
+  }
+
+  const tool = resolution.tool;
+
+  trace.push(
+    createTrace(ExecutionEventType.ToolResolved, {
+      stepId: input.step.id,
+      output: {
+        toolId: tool.id,
+        toolName: tool.name,
+        reason: resolution.reason,
+      },
+      metadata: {
+        executionId: input.executionId,
+        taskId: input.task.id,
+        planId: input.plan.id,
+        capability: requiredCapability,
+      },
+    })
+  );
+
+  const toolInput = createToolInput(input, tool);
+  const toolStartedAt = new Date();
+  const toolCallId = `tool-call-${input.step.id}-${toolStartedAt.getTime()}`;
+
+  trace.push(
+    createTrace(ExecutionEventType.ToolStarted, {
+      stepId: input.step.id,
+      input: toolInput,
+      metadata: {
+        executionId: input.executionId,
+        taskId: input.task.id,
+        planId: input.plan.id,
+        toolId: tool.id,
+        toolName: tool.name,
+      },
+    })
+  );
+
+  const toolResult = await executeTool(tool, toolInput, input.context);
+  const toolCompletedAt = new Date();
+  const toolCall = createToolCall({
+    id: toolCallId,
+    tool,
+    step: input.step,
+    input: toolInput,
+    result: toolResult,
+    startedAt: toolStartedAt,
+    completedAt: toolCompletedAt,
+  });
+
+  toolCalls.push(toolCall);
+
+  if (!toolResult.success) {
+    const error =
+      toolResult.errors[0] ??
+      createExecutionError("execution_tool_failed", `Tool "${tool.name}" failed.`);
+
+    trace.push(
+      createTrace(ExecutionEventType.ToolFailed, {
+        stepId: input.step.id,
+        input: toolInput,
+        output: toolResult.output,
+        error,
+        metadata: {
+          executionId: input.executionId,
+          taskId: input.task.id,
+          planId: input.plan.id,
+          toolId: tool.id,
+          toolName: tool.name,
+          durationMs: toolResult.durationMs,
+        },
+      })
+    );
+    trace.push(
+      createTrace(ExecutionEventType.StepFailed, {
+        stepId: input.step.id,
+        error,
+        metadata: {
+          executionId: input.executionId,
+          taskId: input.task.id,
+          planId: input.plan.id,
+        },
+      })
+    );
+    errors.push(error);
+
+    return {
+      step: failStep(input.step, error, toolResult.output, toolCall),
+      trace,
+      toolCalls,
+      errors,
+    };
+  }
+
+  trace.push(
+    createTrace(ExecutionEventType.ToolCompleted, {
+      stepId: input.step.id,
+      input: toolInput,
+      output: toolResult.output,
+      metadata: {
+        executionId: input.executionId,
+        taskId: input.task.id,
+        planId: input.plan.id,
+        toolId: tool.id,
+        toolName: tool.name,
+        durationMs: toolResult.durationMs,
+      },
+    })
+  );
+
+  const completedStep: PlanStep = {
+    ...input.step,
+    status: PlanStepStatus.Completed,
+    output: toolResult.output,
+    metadata: {
+      ...input.step.metadata,
+      resolvedToolId: tool.id,
+      resolvedToolName: tool.name,
+      toolCallId,
+      toolDurationMs: toolResult.durationMs,
+    },
+  };
+
+  trace.push(
+    createTrace(ExecutionEventType.StepCompleted, {
+      stepId: completedStep.id,
+      input: completedStep.input ?? completedStep.description,
+      output: completedStep.output,
+      metadata: {
+        executionId: input.executionId,
+        taskId: input.task.id,
+        planId: input.plan.id,
+        order: completedStep.order,
+        toolId: tool.id,
+        toolName: tool.name,
+      },
+    })
+  );
+
+  return {
+    step: completedStep,
+    trace,
+    toolCalls,
+    errors,
+  };
 }
 
 function validateExecutionInput(task: Task, plan: Plan): AgentOSError[] {
@@ -333,35 +523,69 @@ function validateExecutionInput(task: Task, plan: Plan): AgentOSError[] {
   return errors;
 }
 
-function simulateStepOutput(step: PlanStep): string {
-  const description = step.description.toLowerCase();
-
-  if (description.includes("gather")) {
-    return "Simulated information gathered.";
+async function executeTool(
+  tool: RegisteredTool,
+  input: Record<string, unknown>,
+  context: ExecutionContext
+): Promise<ToolExecutionResult> {
+  try {
+    return await tool.execute(input, context);
+  } catch (error) {
+    return {
+      success: false,
+      durationMs: 0,
+      errors: [normalizeError(error)],
+    };
   }
+}
 
-  if (description.includes("analyze") || description.includes("analysis")) {
-    return "Simulated analysis completed.";
-  }
+function createToolInput(input: StepExecutionInput, tool: RegisteredTool): Record<string, unknown> {
+  return {
+    taskId: input.task.id,
+    taskInput: input.task.input,
+    planId: input.plan.id,
+    stepId: input.step.id,
+    stepType: input.step.type,
+    stepDescription: input.step.description,
+    stepInput: input.step.input,
+    requiredCapability: getRequiredCapability(input.step),
+    toolId: tool.id,
+    toolName: tool.name,
+    agentId: input.agent.id,
+  };
+}
 
-  if (description.includes("summary") || description.includes("findings")) {
-    return "Simulated summary produced.";
-  }
-
-  if (description.includes("message")) {
-    return "Simulated message prepared.";
-  }
-
-  if (description.includes("payment") || description.includes("invoice")) {
-    return "Simulated payment action prepared.";
-  }
-
-  return "Simulated step completed.";
+function createToolCall(input: {
+  id: string;
+  tool: RegisteredTool;
+  step: PlanStep;
+  input: unknown;
+  result: ToolExecutionResult;
+  startedAt: Date;
+  completedAt: Date;
+}): ToolCallRecord {
+  return {
+    id: input.id,
+    toolId: input.tool.id,
+    toolName: input.tool.name,
+    stepId: input.step.id,
+    input: input.input,
+    output: input.result.output,
+    success: input.result.success,
+    error: input.result.errors[0],
+    startedAt: input.startedAt,
+    completedAt: input.completedAt,
+    durationMs: input.result.durationMs,
+    metadata: {
+      capability: input.tool.capability,
+      outputSummary: summarizeOutput(input.result.output),
+    },
+  };
 }
 
 function createAnswer(steps: PlanStep[]): string {
   return steps
-    .map((step) => `${step.order}. ${step.output ?? "Simulated step completed."}`)
+    .map((step) => `${step.order}. ${summarizeOutput(step.output ?? step.error?.message)}`)
     .join("\n");
 }
 
@@ -383,7 +607,7 @@ function createResult(input: ResultInput): Result {
     answer: input.answer,
     plan: input.plan,
     trace: input.trace,
-    toolCalls: [],
+    toolCalls: input.toolCalls,
     memoryWrites: [],
     errors: input.errors,
     startedAt: input.startedAt,
@@ -408,26 +632,104 @@ function createControlResult(
     status,
     message,
     metadata: {
-      simulated: true,
+      localOnly: true,
       handledAt: new Date(),
     },
   };
 }
 
+function createFailedToolTrace(input: StepExecutionInput, error: AgentOSError): ExecutionTrace {
+  return createTrace(ExecutionEventType.ToolFailed, {
+    stepId: input.step.id,
+    error,
+    metadata: {
+      executionId: input.executionId,
+      taskId: input.task.id,
+      planId: input.plan.id,
+    },
+  });
+}
+
+function createFailedStepTrace(input: StepExecutionInput, error: AgentOSError): ExecutionTrace {
+  return createTrace(ExecutionEventType.StepFailed, {
+    stepId: input.step.id,
+    error,
+    metadata: {
+      executionId: input.executionId,
+      taskId: input.task.id,
+      planId: input.plan.id,
+    },
+  });
+}
+
+function failStep(
+  step: PlanStep,
+  error: AgentOSError,
+  output?: unknown,
+  toolCall?: ToolCallRecord
+): PlanStep {
+  return {
+    ...step,
+    status: PlanStepStatus.Failed,
+    output,
+    error,
+    metadata: {
+      ...step.metadata,
+      toolCallId: toolCall?.id,
+      failedByTool: Boolean(toolCall),
+    },
+  };
+}
+
+function getRequiredCapability(step: PlanStep): string | undefined {
+  const capability = step.metadata?.requiredCapability;
+
+  return typeof capability === "string" ? capability : undefined;
+}
+
+function summarizeOutput(output: unknown): string {
+  if (typeof output === "string") {
+    return output;
+  }
+
+  if (output === undefined) {
+    return "No output.";
+  }
+
+  if (output && typeof output === "object") {
+    const values = Object.values(output);
+    const firstText = values.find((value): value is string => typeof value === "string");
+
+    if (firstText) {
+      return firstText;
+    }
+  }
+
+  try {
+    return JSON.stringify(output);
+  } catch {
+    return String(output);
+  }
+}
+
 function normalizeError(error: unknown): AgentOSError {
   if (error && typeof error === "object" && "message" in error) {
     return {
-      code: "execution_step_failed",
+      code: "execution_tool_failed",
       message: String(error.message),
       details: error,
       recoverable: true,
     };
   }
 
+  return createExecutionError("execution_tool_failed", "Unknown tool execution failure.", error);
+}
+
+function createExecutionError(code: string, message: string, details?: unknown): AgentOSError {
   return {
-    code: "execution_step_failed",
-    message: "Unknown simulated execution failure.",
-    details: error,
+    code,
+    message,
+    details,
     recoverable: true,
   };
 }

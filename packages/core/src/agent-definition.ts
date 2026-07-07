@@ -24,6 +24,7 @@ import {
 } from "@agentos/types";
 import type { MemoryStore } from "@agentos/memory";
 import type { AgentOSRegistry } from "./agentos-registry";
+import { ToolResolver } from "./tool-resolver";
 
 export interface AgentDefinitionConfig {
   id: string;
@@ -131,6 +132,9 @@ export function defineAgent(config: AgentDefinitionConfig): AgentDefinition {
   const permissions = Object.freeze([...(config.permissions ?? [])]);
   const version = config.version ?? "0.1.0";
   const domainAgent = createDomainAgent(config, capabilities, permissions, version);
+  const toolResolver = new ToolResolver({
+    registry: config.registry,
+  });
 
   const definition: AgentDefinition = {
     id: config.id,
@@ -225,6 +229,7 @@ export function defineAgent(config: AgentDefinitionConfig): AgentDefinition {
 
       try {
         result = await config.executionEngine.executePlan(domainAgent, task, plan, context, {
+          toolResolver,
           metadata: options.metadata,
         });
       } catch (error) {

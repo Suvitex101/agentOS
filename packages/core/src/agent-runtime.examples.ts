@@ -1,5 +1,5 @@
 import { InMemoryMemoryStore } from "@agentos/memory";
-import { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
+import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 import { defineAgent } from "./agent-definition";
 import { RuleBasedPlanner } from "./rule-based-planner";
 import { SimpleExecutionEngine } from "./simple-execution-engine";
@@ -21,7 +21,7 @@ export async function createAgentRuntimeExamples() {
     description: "Supports business operations.",
     planner: new RuleBasedPlanner(),
     executionEngine: new SimpleExecutionEngine(),
-    registry: new AgentOSRegistry(),
+    registry: createAgentOSRegistryBootstrapExample(),
     memoryStore: new InMemoryMemoryStore(),
   });
 
@@ -31,7 +31,7 @@ export async function createAgentRuntimeExamples() {
     description: "Helps with lightweight research tasks.",
     planner: new RuleBasedPlanner(),
     executionEngine: new SimpleExecutionEngine(),
-    registry: new AgentOSRegistry(),
+    registry: createAgentOSRegistryBootstrapExample(),
     memoryStore: new InMemoryMemoryStore(),
   });
 

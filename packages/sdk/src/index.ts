@@ -8,9 +8,11 @@ export {
   AgentDefinitionValidationError,
   RuleBasedPlanner,
   SimpleExecutionEngine,
+  ToolResolver,
   createAgentOSRegistryBootstrapExample,
   createAgentDefinitionExamples,
   createAgentRuntimeExamples,
+  createMockTools,
   createTask,
   defineAgent,
   validateAgentDefinitionConfig,
@@ -27,6 +29,7 @@ export type {
   CreateTaskInput,
   RuleBasedPlannerOptions,
   SimpleExecutionEngineOptions,
+  ToolResolverOptions,
 } from "@agentos/core";
 export {
   InMemoryMemoryStore,

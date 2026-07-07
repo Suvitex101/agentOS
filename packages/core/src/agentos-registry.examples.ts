@@ -3,9 +3,9 @@ import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 
 export function createAgentOSRegistryDiscoveryExample() {
   const registry = createAgentOSRegistryBootstrapExample();
-  const messagingCapability = registry.findCapabilityById("capability-messaging");
-  const messagingTools = registry.findToolsByCapability("capability-messaging");
-  const messagingConnectors = registry.findConnectorsByCapability("capability-messaging");
+  const messagingCapability = registry.findCapabilityById("messaging");
+  const messagingTools = registry.findToolsByCapability("messaging");
+  const messagingConnectors = registry.findConnectorsByCapability("messaging");
   const messagingCapabilities = registry.findCapabilitiesByCategory(CapabilityCategory.Messaging);
 
   return {
@@ -15,6 +15,6 @@ export function createAgentOSRegistryDiscoveryExample() {
     messagingCapabilities,
     messagingConnectors,
     messagingTools,
-    channel: registry.findResourceById("resource-discord-builders-channel"),
+    channel: registry.findResourceById("resource-local-demo-channel"),
   };
 }

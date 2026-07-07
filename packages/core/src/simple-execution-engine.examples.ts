@@ -9,8 +9,10 @@ import {
   type Task,
 } from "@agentos/types";
 import { createTask } from "./index";
+import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 import { RuleBasedPlanner } from "./rule-based-planner";
 import { SimpleExecutionEngine } from "./simple-execution-engine";
+import { ToolResolver } from "./tool-resolver";
 
 const exampleAgent: Agent = {
   id: "agent-execution-example",
@@ -40,9 +42,11 @@ export interface SimpleExecutionEngineExampleResult {
   failedValidationResult: Result;
 }
 
-export function createSimpleExecutionEngineExample(): SimpleExecutionEngineExampleResult {
+export async function createSimpleExecutionEngineExample(): Promise<SimpleExecutionEngineExampleResult> {
   const planner = new RuleBasedPlanner();
+  const registry = createAgentOSRegistryBootstrapExample();
   const engine = new SimpleExecutionEngine();
+  const toolResolver = new ToolResolver({ registry });
   const task = createTask({
     id: "execution-example-task",
     input: "Summarize the top complaints in our Discord community this week",
@@ -53,12 +57,22 @@ export function createSimpleExecutionEngineExample(): SimpleExecutionEngineExamp
   });
   const context = createExampleContext(task);
   const plan = planner.plan(exampleAgent, task, context);
-  const result = engine.executePlan(exampleAgent, task, plan, context);
+  const result = await engine.executePlan(exampleAgent, task, plan, context, {
+    toolResolver,
+  });
   const invalidPlan: Plan = {
     ...plan,
     taskId: "different-task-id",
   };
-  const failedValidationResult = engine.executePlan(exampleAgent, task, invalidPlan, context);
+  const failedValidationResult = await engine.executePlan(
+    exampleAgent,
+    task,
+    invalidPlan,
+    context,
+    {
+      toolResolver,
+    }
+  );
 
   return {
     task,
