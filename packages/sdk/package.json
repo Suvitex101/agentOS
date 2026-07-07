@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@agentos/core": "workspace:*",
+    "@agentos/memory": "workspace:*",
     "@agentos/types": "workspace:*"
   },
   "scripts": {

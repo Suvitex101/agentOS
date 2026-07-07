@@ -11,6 +11,19 @@ export type { RuleBasedPlannerOptions } from "./rule-based-planner";
 export { SimpleExecutionEngine } from "./simple-execution-engine";
 export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
+export {
+  AgentDefinitionValidationError,
+  defineAgent,
+  validateAgentDefinitionConfig,
+} from "./agent-definition";
+export { createAgentDefinitionExamples } from "./agent-definition.examples";
+export type {
+  AgentDefinition,
+  AgentDefinitionConfig,
+  AgentDefinitionInspection,
+  AgentDefinitionSummary,
+  AgentDefinitionValidationResult,
+} from "./agent-definition";
 
 export const agentOSCore = {
   name: "@agentos/core",

@@ -123,9 +123,11 @@ Current concepts:
   interfaces for future runtime discovery.
 - `AgentOSRegistry`: the in-memory kernel catalog for capabilities, connectors,
   tools, and resources.
+- `MemoryStore` and `InMemoryMemoryStore`: provider-agnostic memory contracts
+  and a local in-memory implementation for development.
 
-No runtime, planner logic, execution engine, memory storage, database,
-connectors, or LLM calls are implemented yet.
+No agent runtime, database-backed memory, real connectors, dashboard, external
+APIs, or LLM calls are implemented yet.
 
 ## Architectural Contracts
 
@@ -164,6 +166,39 @@ The registry does not execute tools, call external APIs, persist data, or connec
 to providers. It only manages registration, discovery, summaries, and
 relationship validation.
 
+## Memory Layer
+
+`InMemoryMemoryStore` is the first memory implementation. It is intentionally
+small and local:
+
+- Writes scoped memory records.
+- Reads records by id.
+- Searches with simple keyword matching across content, type, scope, and
+  metadata.
+- Lists records globally or by scope.
+- Deletes records by id.
+- Clears all records or records within a scope.
+
+It does not use a database, vector embeddings, semantic search, LLM extraction,
+or external storage.
+
+## Agent Composition
+
+`defineAgent()` creates an immutable `AgentDefinition` from independent AgentOS
+components. It is dependency injection, not execution.
+
+An agent definition wires together:
+
+- a planner
+- an execution engine
+- a registry
+- a memory store
+- optional capabilities and permissions
+
+This lets developers replace the planner, memory store, execution engine, or
+registry without changing the agent definition shape. `defineAgent()` does not
+plan tasks, execute plans, call tools, connect providers, or run workflows.
+
 ## Example Usage
 
 ```ts
@@ -171,6 +206,7 @@ import {
   AgentOSRegistry,
   CapabilityCategory,
   ConnectorAuthType,
+  InMemoryMemoryStore,
   MissionPriority,
   MissionStatus,
   MemoryScope,
@@ -182,6 +218,7 @@ import {
   ToolCategory,
   ToolPermissionLevel,
   createTask,
+  defineAgent,
   type Agent,
   type Capability,
   type Mission,
@@ -316,7 +353,48 @@ registry.registerResource(sourceChannel);
 console.log(registry.findToolsByCapability("capability-messaging"));
 console.log(registry.summary());
 
+const memory = new InMemoryMemoryStore();
+const memoryWrite = memory.write({
+  content: "The user is building AgentOS for open-source AI agents in Africa.",
+  type: MemoryType.Fact,
+  scope: {
+    type: MemoryScope.Project,
+    id: "agentos",
+  },
+});
+const memories = memory.search({
+  query: "Africa agents",
+  scope: {
+    type: MemoryScope.Project,
+    id: "agentos",
+  },
+});
+
+console.log(memoryWrite.record);
+console.log(memories);
+
 const planner = new RuleBasedPlanner();
+const execution = new SimpleExecutionEngine();
+const communityManager = defineAgent({
+  id: "community-manager",
+  name: "Community Manager",
+  description: "Manages online communities.",
+  planner,
+  executionEngine: execution,
+  registry,
+  memoryStore: memory,
+  capabilities: [{ name: "community-management" }],
+  permissions: [
+    {
+      resource: "messages",
+      level: ToolPermissionLevel.Read,
+    },
+  ],
+});
+
+console.log(communityManager.summary());
+console.log(communityManager.inspect());
+
 const context = {
   agent,
   task,
@@ -330,8 +408,7 @@ const plan = await planner.plan(agent, task, context);
 
 console.log(plan.steps);
 
-const engine = new SimpleExecutionEngine();
-const result = await engine.executePlan(agent, task, plan, context);
+const result = await execution.executePlan(agent, task, plan, context);
 
 console.log(result.answer);
 console.log(result.trace);

@@ -67,17 +67,27 @@ importers:
 
   packages/core:
     dependencies:
+      '@agentos/memory':
+        specifier: workspace:*
+        version: link:../memory
       '@agentos/types':
         specifier: workspace:*
         version: link:../types
 
-  packages/memory: {}
+  packages/memory:
+    dependencies:
+      '@agentos/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/sdk:
     dependencies:
       '@agentos/core':
         specifier: workspace:*
         version: link:../core
+      '@agentos/memory':
+        specifier: workspace:*
+        version: link:../memory
       '@agentos/types':
         specifier: workspace:*
         version: link:../types

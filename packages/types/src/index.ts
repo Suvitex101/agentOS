@@ -164,6 +164,8 @@ export enum MemoryScope {
   Organization = "organization",
   Agent = "agent",
   Task = "task",
+  Mission = "mission",
+  Project = "project",
   Global = "global",
 }
 
@@ -391,13 +393,18 @@ export interface RegistryValidationResult {
 export interface MemoryRecord {
   id: string;
   type: MemoryType;
-  scope: MemoryScope;
+  scope: MemoryScopeReference;
   content: unknown;
   ownerId?: string;
   taskId?: string;
   createdAt: Date;
   updatedAt: Date;
   metadata?: AgentOSMetadata;
+}
+
+export interface MemoryScopeReference {
+  type: MemoryScope;
+  id?: string;
 }
 
 export interface MemoryPolicy {
@@ -411,8 +418,10 @@ export interface MemoryPolicy {
 
 export interface MemoryQuery {
   text?: string;
+  query?: string;
   types?: MemoryType[];
   scopes?: MemoryScope[];
+  scope?: MemoryScopeReference;
   ownerId?: string;
   taskId?: string;
   limit?: number;
