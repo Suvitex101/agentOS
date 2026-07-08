@@ -197,6 +197,13 @@ export enum SecurityPolicyDecisionType {
   RequiresApproval = "requires_approval",
 }
 
+export enum ModelFinishReason {
+  Stop = "stop",
+  Length = "length",
+  Error = "error",
+  Unknown = "unknown",
+}
+
 export enum MemoryType {
   Fact = "fact",
   Preference = "preference",
@@ -387,6 +394,45 @@ export interface ToolExample<Input = unknown, Output = unknown> {
   output?: Output;
   description?: string;
   metadata?: AgentOSMetadata;
+}
+
+export interface ModelGenerationRequest {
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ModelUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ModelGenerationResponse {
+  text: string;
+  usage?: ModelUsage;
+  metadata?: AgentOSMetadata;
+  finishReason?: ModelFinishReason | string;
+  provider?: string;
+  model?: string;
+  durationMs?: number;
+}
+
+export interface ModelProvider {
+  id: string;
+  name: string;
+  description?: string;
+  version: string;
+  author?: ToolAuthor;
+  tags?: string[];
+  metadata?: AgentOSMetadata;
+  capabilities: string[];
+  generate(
+    request: ModelGenerationRequest
+  ): Promise<ModelGenerationResponse> | ModelGenerationResponse;
 }
 
 export interface Tool<Input = unknown, Output = unknown> {

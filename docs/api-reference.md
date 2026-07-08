@@ -77,6 +77,54 @@ external APIs.
 trust level, permissions, and access flags such as `networkAccess`,
 `filesystemAccess`, and `secretsAccess`.
 
+## `defineModelProvider(config)`
+
+Creates an immutable model provider definition.
+
+Important fields:
+
+- `id`
+- `name`
+- `description`
+- `version`
+- `author`
+- `tags`
+- `metadata`
+- `capabilities`
+- `generate(request)`
+
+The returned provider exposes:
+
+- `generate(request)`
+- `inspect()`
+- `summary()`
+
+Request shape:
+
+- `prompt`
+- `systemPrompt`
+- `temperature`
+- `maxTokens`
+- `metadata`
+
+Response shape:
+
+- `text`
+- `usage`
+- `metadata`
+- `finishReason`
+- `provider`
+- `model`
+- `durationMs`
+
+Built-in local providers:
+
+- `MockModelProvider`
+- `EchoModelProvider`
+
+Current behavior: provider definitions are local abstractions only. They are not
+integrated with planners or runtime execution yet.
+
 ## `AgentOSRegistry`
 
 In-memory registry for:

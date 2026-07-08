@@ -47,6 +47,22 @@ export type {
 } from "./tool-definition";
 export { ToolResolver } from "./tool-resolver";
 export type { ToolResolverOptions } from "./tool-resolver";
+export {
+  EchoModelProvider,
+  MockModelProvider,
+  ModelProviderDefinitionValidationError,
+  defineModelProvider,
+  validateModelProviderDefinitionConfig,
+} from "./model-provider-definition";
+export type {
+  ModelProviderDefinition,
+  ModelProviderDefinitionConfig,
+  ModelProviderDefinitionValidationOptions,
+  ModelProviderDefinitionValidationResult,
+  ModelProviderGenerationContext,
+  ModelProviderInspection,
+  ModelProviderSummary,
+} from "./model-provider-definition";
 export { SecurityPolicyEngine } from "./security-policy-engine";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 export type { AgentOSRegistryOptions, ConnectorBundleRegistration } from "./agentos-registry";

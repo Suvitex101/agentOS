@@ -32,6 +32,8 @@ integration, database-backed memory, or dashboard functionality.
   exports.
 - [Connector Security](docs/security/connector-security.md): security metadata,
   permissions, and future policy model for connectors.
+- [Model Provider SDK](docs/model-provider-sdk.md): provider abstraction for
+  future reasoning engines.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -135,6 +137,12 @@ Run the HTTP connector example:
 
 ```bash
 pnpm example:http
+```
+
+Run the model provider example:
+
+```bash
+pnpm example:model-provider
 ```
 
 Run the local quality gate:
@@ -378,6 +386,34 @@ Safety model:
 
 Current limitations: no authentication, cookies, sessions, request bodies,
 state-changing methods, WebSockets, streaming API, or provider-specific clients.
+
+## Model Provider SDK
+
+`defineModelProvider()` defines provider abstractions for future reasoning
+engines. The API uses familiar model-provider terminology, but the architecture
+keeps providers separate from planners so AgentOS does not become model-centric.
+
+```ts
+import { defineModelProvider } from "@agentos/sdk";
+
+const provider = defineModelProvider({
+  id: "mock",
+  name: "Mock Provider",
+  version: "1.0.0",
+  generate(request) {
+    return {
+      text: `Response for: ${request.prompt}`,
+      usage: {},
+      metadata: {},
+    };
+  },
+});
+```
+
+AgentOS currently includes `MockModelProvider` and `EchoModelProvider` for local
+tests and examples. No external model APIs are implemented yet.
+
+See [docs/model-provider-sdk.md](docs/model-provider-sdk.md).
 
 ## Run An Agent
 
