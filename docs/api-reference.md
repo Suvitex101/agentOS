@@ -183,3 +183,52 @@ registry.registerConnectorBundle(LocalCommunityConnector);
 ```
 
 This is not a real Discord, Slack, Telegram, or external provider connector.
+
+## `createFilesystemConnector(options)`
+
+Creates a safe local filesystem connector using the connector bundle
+architecture.
+
+Required options:
+
+- `workspaceRoot`: directory that all filesystem tool paths are confined to
+
+Optional options:
+
+- `id`
+- `name`
+- `description`
+- `version`
+
+The connector exposes:
+
+- storage capability
+- search capability
+- `ListFilesTool`
+- `ReadFileTool`
+- `WriteFileTool`
+- `SearchFilesTool`
+
+Example:
+
+```ts
+import { AgentOSRegistry, createFilesystemConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const filesystemConnector = createFilesystemConnector({
+  workspaceRoot: "./workspace",
+});
+
+registry.registerConnectorBundle(filesystemConnector);
+```
+
+Safety model:
+
+- paths are resolved relative to `workspaceRoot`
+- absolute paths are denied
+- traversal outside `workspaceRoot` is denied
+- writes outside `workspaceRoot` are denied
+- search skips non-text files and large files
+
+This is a real local connector. It does not call external APIs and does not
+provide authentication, file watching, or remote storage behavior.

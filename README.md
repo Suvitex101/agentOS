@@ -123,6 +123,12 @@ Run the community connector bundle example:
 pnpm example:community-connector
 ```
 
+Run the filesystem connector example:
+
+```bash
+pnpm example:filesystem
+```
+
 Run the local quality gate:
 
 ```bash
@@ -286,6 +292,34 @@ Best practices for connector authors:
 
 See `examples/community-connector` for a complete local bundle lifecycle.
 
+## Filesystem Connector
+
+`createFilesystemConnector()` creates a real local connector for safe workspace
+file access. It can list, read, write, and search files inside an explicitly
+configured `workspaceRoot`.
+
+```ts
+import { AgentOSRegistry, createFilesystemConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const filesystemConnector = createFilesystemConnector({
+  workspaceRoot: "./workspace",
+});
+
+registry.registerConnectorBundle(filesystemConnector);
+```
+
+Safety model:
+
+- all tool paths resolve relative to `workspaceRoot`
+- absolute paths are rejected
+- `../` traversal outside the workspace is rejected
+- reads and writes outside the workspace are rejected
+- search is limited to text files and skips large files
+
+Current limitations: this connector is local-only, has no authentication model,
+does not implement file watching, and is not a remote storage connector.
+
 ## Run An Agent
 
 ```ts
@@ -326,6 +360,7 @@ pnpm example:memory
 pnpm example:custom-tool
 pnpm example:research-connector
 pnpm example:community-connector
+pnpm example:filesystem
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution, and

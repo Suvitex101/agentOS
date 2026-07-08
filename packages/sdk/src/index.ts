@@ -72,4 +72,18 @@ export type {
   MemoryWriteInput,
   MemoryWriteResult,
 } from "@agentos/memory";
+export { agentOSConnectors, createFilesystemConnector } from "@agentos/connectors";
+export type {
+  FileEntry,
+  FilesystemConnectorOptions,
+  ListFilesInput,
+  ListFilesOutput,
+  ReadFileInput,
+  ReadFileOutput,
+  SearchFilesInput,
+  SearchFilesOutput,
+  SearchMatch,
+  WriteFileInput,
+  WriteFileOutput,
+} from "@agentos/connectors";
 export * from "@agentos/types";

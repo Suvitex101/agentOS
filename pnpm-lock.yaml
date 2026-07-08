@@ -69,7 +69,18 @@ importers:
 
   packages/config: {}
 
-  packages/connectors: {}
+  packages/connectors:
+    dependencies:
+      '@agentos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@agentos/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.0
 
   packages/core:
     dependencies:
@@ -88,6 +99,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@agentos/connectors':
+        specifier: workspace:*
+        version: link:../connectors
       '@agentos/core':
         specifier: workspace:*
         version: link:../core
@@ -97,6 +111,10 @@ importers:
       '@agentos/types':
         specifier: workspace:*
         version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.0
 
   packages/tools: {}
 

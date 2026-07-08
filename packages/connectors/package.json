@@ -10,5 +10,12 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agentos/core": "workspace:*",
+    "@agentos/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7"
   }
 }

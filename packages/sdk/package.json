@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@agentos/connectors": "workspace:*",
     "@agentos/core": "workspace:*",
     "@agentos/memory": "workspace:*",
     "@agentos/types": "workspace:*"
@@ -15,5 +16,8 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7"
   }
 }
