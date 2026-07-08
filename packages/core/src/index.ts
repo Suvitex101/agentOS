@@ -47,8 +47,9 @@ export type {
 } from "./tool-definition";
 export { ToolResolver } from "./tool-resolver";
 export type { ToolResolverOptions } from "./tool-resolver";
+export { SecurityPolicyEngine } from "./security-policy-engine";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
-export type { ConnectorBundleRegistration } from "./agentos-registry";
+export type { AgentOSRegistryOptions, ConnectorBundleRegistration } from "./agentos-registry";
 export { LocalCommunityConnector } from "./local-community-connector";
 export {
   AgentDefinitionValidationError,

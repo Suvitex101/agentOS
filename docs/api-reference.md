@@ -105,6 +105,31 @@ Common methods:
 - `summary()`
 - `validate()`
 
+The registry can receive a `SecurityPolicyEngine` and delegates connector bundle
+admission to it before registration.
+
+## `SecurityPolicyEngine`
+
+Pure evaluator for connector security profiles.
+
+Methods:
+
+- `evaluateConnector(connector)`
+- `evaluateSecurityProfile(security, metadata?)`
+
+Decisions:
+
+- `Allow`
+- `Deny`
+- `RequiresApproval`
+
+Helper policies:
+
+- `SecurityPolicyEngine.strictPolicy()`
+- `SecurityPolicyEngine.developerPolicy()`
+- `SecurityPolicyEngine.enterprisePolicy()`
+- `SecurityPolicyEngine.researchPolicy()`
+
 ## `RuleBasedPlanner`
 
 Deterministic local planner.

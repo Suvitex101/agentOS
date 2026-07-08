@@ -42,6 +42,9 @@ security: {
 The profile is metadata today. It is returned by `connector.inspect()` and
 stored on the connector manifest.
 
+The [Security Policy Engine](policy-engine.md) can evaluate this profile before
+connector bundle registration.
+
 ## Permissions
 
 Current generic connector permissions:
@@ -91,6 +94,18 @@ Connector validation currently checks:
 - duplicate security permissions are rejected
 
 This is validation only. Runtime policy enforcement is future work.
+
+## Policy Evaluation
+
+Phase 24 introduces `SecurityPolicyEngine`, which evaluates connector security
+profiles and returns:
+
+- `Allow`
+- `Deny`
+- `RequiresApproval`
+
+The AgentOS Registry delegates connector bundle admission to this engine. Denied
+or approval-required bundles are not partially registered.
 
 ## Future Enforcement
 

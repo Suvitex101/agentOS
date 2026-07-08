@@ -1,7 +1,9 @@
 import {
   CapabilityCategory,
   ResourceType,
+  SecurityPolicyDecisionType,
   type AgentOSError,
+  type AgentOSMetadata,
   type Capability,
   type ConnectorManifest,
   type RegisteredTool,
@@ -13,6 +15,7 @@ import {
 } from "@agentos/types";
 import { defineConnector, type ConnectorDefinition } from "./connector-definition";
 import { createMockTools } from "./mock-tools";
+import { SecurityPolicyEngine } from "./security-policy-engine";
 
 export interface ConnectorBundleRegistration {
   connectorId: string;
@@ -23,12 +26,21 @@ export interface ConnectorBundleRegistration {
   registeredAt: Date;
 }
 
+export interface AgentOSRegistryOptions {
+  securityPolicyEngine?: SecurityPolicyEngine;
+}
+
 export class AgentOSRegistry {
   private readonly capabilities = new Map<string, Capability>();
   private readonly connectors = new Map<string, ConnectorManifest>();
   private readonly tools = new Map<string, RegisteredTool>();
   private readonly resources = new Map<string, Resource>();
   private readonly connectorBundles = new Map<string, ConnectorBundleRegistration>();
+  private readonly securityPolicyEngine: SecurityPolicyEngine;
+
+  constructor(options: AgentOSRegistryOptions = {}) {
+    this.securityPolicyEngine = options.securityPolicyEngine ?? new SecurityPolicyEngine();
+  }
 
   registerCapability(capability: Capability): RegistryOperationResult<Capability> {
     return this.register(this.capabilities, capability, "capability");
@@ -49,6 +61,34 @@ export class AgentOSRegistry {
   registerConnectorBundle(
     connector: ConnectorDefinition
   ): RegistryOperationResult<ConnectorBundleRegistration> {
+    const securityDecision = this.securityPolicyEngine.evaluateConnector(connector);
+
+    if (securityDecision.decision === SecurityPolicyDecisionType.Deny) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_connector_denied_by_policy",
+          `Connector bundle "${connector.id}" was denied by security policy.`,
+          {
+            securityDecision,
+          }
+        ),
+      };
+    }
+
+    if (securityDecision.decision === SecurityPolicyDecisionType.RequiresApproval) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_connector_requires_approval",
+          `Connector bundle "${connector.id}" requires approval before registration.`,
+          {
+            securityDecision,
+          }
+        ),
+      };
+    }
+
     const validation = this.validateConnectorBundleRegistration(connector);
 
     if (!validation.success) {
@@ -537,11 +577,16 @@ export function createAgentOSRegistryBootstrapExample(): AgentOSRegistry {
   return registry;
 }
 
-function createRegistryError(code: string, message: string): AgentOSError {
+function createRegistryError(
+  code: string,
+  message: string,
+  metadata?: AgentOSMetadata
+): AgentOSError {
   return {
     code,
     message,
     recoverable: true,
+    metadata,
   };
 }
 

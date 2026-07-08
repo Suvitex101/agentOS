@@ -190,6 +190,12 @@ export enum ConnectorPermission {
   SecretsAccess = "secrets_access",
 }
 
+export enum SecurityPolicyDecisionType {
+  Allow = "allow",
+  Deny = "deny",
+  RequiresApproval = "requires_approval",
+}
+
 export enum MemoryType {
   Fact = "fact",
   Preference = "preference",
@@ -718,6 +724,26 @@ export interface ConnectorSecurityPolicy {
   allowNetworkAccess?: boolean;
   allowFilesystemAccess?: boolean;
   allowSecretsAccess?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export interface SecurityPolicyConfig {
+  maximumRiskLevel?: ConnectorRiskLevel;
+  allowedPermissions?: ConnectorPermission[];
+  deniedPermissions?: ConnectorPermission[];
+  allowFilesystemConnectors?: boolean;
+  allowNetworkConnectors?: boolean;
+  allowSecretsAccess?: boolean;
+  requireApprovalAboveRiskLevel?: ConnectorRiskLevel;
+  requireApprovalForPermissions?: ConnectorPermission[];
+  metadata?: AgentOSMetadata;
+}
+
+export interface SecurityPolicyDecision {
+  decision: SecurityPolicyDecisionType;
+  reasons: string[];
+  warnings: string[];
+  matchedRules: string[];
   metadata?: AgentOSMetadata;
 }
 

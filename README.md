@@ -326,11 +326,16 @@ does not implement file watching, and is not a remote storage connector.
 
 Connectors can declare security metadata such as risk level, trust level,
 permissions, and access flags. This is inspectable metadata today; runtime
-policy enforcement is future work.
+enforcement is future work.
+
+`SecurityPolicyEngine` evaluates connector bundles before registry registration
+and returns `Allow`, `Deny`, or `RequiresApproval`. Denied or approval-required
+bundles are not partially registered.
 
 Security docs:
 
 - [Connector Security](docs/security/connector-security.md)
+- [Policy Engine](docs/security/policy-engine.md)
 - [Connector Author Checklist](docs/security/security-checklist.md)
 - [Connector Threat Model](docs/security/threat-model.md)
 

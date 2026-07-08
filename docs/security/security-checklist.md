@@ -49,6 +49,8 @@ Use this checklist when creating or reviewing an AgentOS connector.
 ## Review
 
 - [ ] Add unit tests for security metadata.
+- [ ] Add policy engine tests for allowed, denied, and approval-required cases.
+- [ ] Verify denied bundles do not partially register capabilities, tools, or resources.
 - [ ] Add tests for unsafe input.
 - [ ] Add integration tests for registry bundle behavior.
 - [ ] Document current limitations.

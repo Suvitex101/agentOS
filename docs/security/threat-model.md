@@ -6,7 +6,8 @@ connectors. It is intentionally provider-agnostic.
 ## Scope
 
 Current AgentOS connector security is metadata and validation only. Runtime
-policy enforcement is not implemented yet.
+enforcement is not implemented yet. Registration-time policy evaluation is
+implemented through `SecurityPolicyEngine`.
 
 Covered components:
 
@@ -97,10 +98,11 @@ Current mitigation:
 
 - security profiles are inspectable
 - high and critical risk connectors must declare permissions
+- connector bundles are evaluated by `SecurityPolicyEngine` before registration
 
 Future mitigation:
 
-- enforce `ConnectorSecurityPolicy`
+- enforce policy at execution time
 - surface warnings in CLI or dashboard
 - reject connectors that exceed configured policy
 
