@@ -35,6 +35,8 @@ Use this checklist when creating or reviewing an AgentOS connector.
 - [ ] Require explicit allowed hosts or origins.
 - [ ] Set request timeouts.
 - [ ] Limit response size.
+- [ ] Support read-only methods first.
+- [ ] Disable redirects unless they are explicitly modeled.
 - [ ] Redact sensitive headers from logs.
 - [ ] Consider SSRF risks before allowing arbitrary URLs.
 - [ ] Avoid mutating methods unless explicitly requested.

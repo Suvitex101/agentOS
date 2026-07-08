@@ -1,4 +1,6 @@
+import { lookup } from "node:dns/promises";
 import { mkdir, readdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
+import { isIP } from "node:net";
 import path from "node:path";
 import { defineConnector, defineTool, type ConnectorDefinition } from "@agentos/core";
 import {
@@ -24,6 +26,21 @@ export interface FilesystemConnectorOptions {
   name?: string;
   description?: string;
   version?: string;
+}
+
+export type HttpFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
+export type HttpResolveHost = (hostname: string) => Promise<string[]>;
+
+export interface HttpConnectorOptions {
+  allowlist: string[];
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+  id?: string;
+  name?: string;
+  description?: string;
+  version?: string;
+  fetchImplementation?: HttpFetch;
+  resolveHost?: HttpResolveHost;
 }
 
 export interface ListFilesInput {
@@ -87,6 +104,20 @@ export interface SearchFilesOutput {
   skippedFiles: number;
 }
 
+export interface HttpGetInput {
+  url: string;
+  headers?: Record<string, string>;
+}
+
+export interface HttpGetOutput {
+  url: string;
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+  bytesRead: number;
+}
+
 interface SafePathResult {
   success: boolean;
   absolutePath?: string;
@@ -94,8 +125,29 @@ interface SafePathResult {
   error?: AgentOSError;
 }
 
+interface SafeHttpUrlResult {
+  success: boolean;
+  url?: URL;
+  error?: AgentOSError;
+}
+
+interface HttpBodyResult {
+  body: string;
+  bytesRead: number;
+}
+
 const MAX_LIST_ENTRIES = 1000;
 const MAX_SEARCH_FILE_SIZE_BYTES = 1024 * 1024;
+const DEFAULT_HTTP_TIMEOUT_MS = 5000;
+const DEFAULT_HTTP_MAX_RESPONSE_BYTES = 1024 * 1024;
+const SENSITIVE_HEADER_NAMES = new Set([
+  "authorization",
+  "cookie",
+  "proxy-authorization",
+  "set-cookie",
+  "x-api-key",
+  "x-auth-token",
+]);
 const TEXT_EXTENSIONS = new Set([
   ".css",
   ".csv",
@@ -432,6 +484,176 @@ export function createFilesystemConnector(
   });
 }
 
+export function createHttpConnector(options: HttpConnectorOptions): ConnectorDefinition {
+  if (!options.allowlist?.length) {
+    throw new Error("HttpConnector requires at least one allowlisted HTTPS origin.");
+  }
+
+  const connectorId = options.id ?? "http";
+  const timeoutMs = options.timeoutMs ?? DEFAULT_HTTP_TIMEOUT_MS;
+  const maxResponseBytes = options.maxResponseBytes ?? DEFAULT_HTTP_MAX_RESPONSE_BYTES;
+  const allowlist = normalizeHttpAllowlist(options.allowlist);
+  const fetchImplementation = options.fetchImplementation ?? fetch;
+  const resolveHost = options.resolveHost ?? resolveHostWithDNS;
+
+  if (timeoutMs <= 0) {
+    throw new Error("HttpConnector timeoutMs must be greater than zero.");
+  }
+
+  if (maxResponseBytes <= 0) {
+    throw new Error("HttpConnector maxResponseBytes must be greater than zero.");
+  }
+
+  const httpGetTool = defineTool<unknown, HttpGetOutput>({
+    id: `tool-${connectorId}-get`,
+    name: "HttpGetTool",
+    description: "Performs a safe HTTPS GET request to an allowlisted origin.",
+    capability: "retrieval",
+    capabilityIds: ["network", "retrieval"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseHttpGetInput(input);
+      const safeUrl = await validateHttpUrl(parsedInput.url, allowlist, resolveHost);
+
+      if (!safeUrl.success) {
+        return failedHttpToolResult(startedAt, safeUrl.error);
+      }
+
+      const headers = sanitizeRequestHeaders(parsedInput.headers);
+
+      if (!headers.success) {
+        return failedHttpToolResult(startedAt, headers.error);
+      }
+
+      const controller = new AbortController();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      try {
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            controller.abort();
+            reject(createHttpToolError("http_timeout", "HTTP GET request exceeded timeout."));
+          }, timeoutMs);
+        });
+        const response = await Promise.race([
+          fetchImplementation(safeUrl.url!, {
+            method: "GET",
+            headers: headers.headers,
+            redirect: "manual",
+            signal: controller.signal,
+          }),
+          timeout,
+        ]);
+
+        if (response.status >= 300 && response.status < 400) {
+          return failedHttpToolResult(
+            startedAt,
+            createHttpToolError("http_redirect_denied", "HTTP redirects are not allowed.")
+          );
+        }
+
+        const body = await readHttpBody(response, maxResponseBytes);
+
+        return {
+          success: true,
+          output: {
+            url: safeUrl.url!.toString(),
+            status: response.status,
+            statusText: response.statusText,
+            headers: safeResponseHeaders(response.headers),
+            body: body.body,
+            bytesRead: body.bytesRead,
+          },
+          metadata: {
+            allowlist: [...allowlist],
+            timeoutMs,
+            maxResponseBytes,
+            requestHeaders: redactHeaders(headers.headers),
+          },
+          durationMs: Date.now() - startedAt,
+          errors: [],
+        };
+      } catch (error) {
+        return failedHttpToolResult(startedAt, normalizeHttpError(error));
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      }
+    },
+  });
+
+  return defineConnector({
+    id: connectorId,
+    name: options.name ?? "HTTP Connector",
+    description:
+      options.description ?? "Safely performs HTTPS GET requests to allowlisted origins.",
+    version: options.version ?? "1.0.0",
+    capabilities: [
+      {
+        id: "network",
+        name: "Network",
+        description: "Access allowlisted network resources.",
+        category: CapabilityCategory.Custom,
+        supportedConnectors: [connectorId],
+      },
+      {
+        id: "retrieval",
+        name: "Retrieval",
+        description: "Retrieve remote content through safe GET requests.",
+        category: CapabilityCategory.Search,
+        supportedConnectors: [connectorId],
+      },
+    ],
+    tools: [httpGetTool],
+    resources: [
+      {
+        id: `${connectorId}-allowlist`,
+        type: ResourceType.DatabaseRecord,
+        source: connectorId,
+        uri: `agentos://connectors/${connectorId}/allowlist`,
+        metadata: {
+          allowlist: [...allowlist],
+        },
+      },
+    ],
+    tags: ["http", "network", "retrieval", "get-only"],
+    security: {
+      riskLevel: ConnectorRiskLevel.Medium,
+      trustLevel: ConnectorTrustLevel.Remote,
+      permissions: [ConnectorPermission.NetworkAccess],
+      requiresUserApproval: false,
+      networkAccess: true,
+      filesystemAccess: false,
+      secretsAccess: false,
+      metadata: {
+        allowlist: [...allowlist],
+        methods: ["GET"],
+      },
+    },
+    metadata: {
+      allowlist: [...allowlist],
+      timeoutMs,
+      maxResponseBytes,
+      redirects: "disabled",
+      methods: ["GET"],
+    },
+    health() {
+      return {
+        healthy: true,
+        metadata: {
+          allowlist: [...allowlist],
+          timeoutMs,
+          maxResponseBytes,
+        },
+      };
+    },
+  });
+}
+
 function parseListFilesInput(input: unknown): Partial<ListFilesInput> {
   const record = asRecord(input);
 
@@ -469,6 +691,15 @@ function parseSearchFilesInput(input: unknown): Partial<SearchFilesInput> {
   };
 }
 
+function parseHttpGetInput(input: unknown): Partial<HttpGetInput> {
+  const record = asRecord(input);
+
+  return {
+    url: readOptionalString(record.url),
+    headers: readOptionalStringRecord(record.headers),
+  };
+}
+
 function asRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === "object" ? (input as Record<string, unknown>) : {};
 }
@@ -479,6 +710,290 @@ function readOptionalString(value: unknown): string | undefined {
 
 function readOptionalBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function readOptionalStringRecord(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const output: Record<string, string> = {};
+
+  for (const [key, entryValue] of Object.entries(value)) {
+    if (typeof entryValue === "string") {
+      output[key] = entryValue;
+    }
+  }
+
+  return output;
+}
+
+function normalizeHttpAllowlist(allowlist: string[]): string[] {
+  const origins = allowlist.map((entry) => {
+    const url = new URL(entry);
+
+    if (url.protocol !== "https:") {
+      throw new Error(`HttpConnector allowlist entry "${entry}" must use HTTPS.`);
+    }
+
+    return url.origin;
+  });
+
+  return [...new Set(origins)];
+}
+
+async function validateHttpUrl(
+  inputUrl: string | undefined,
+  allowlist: readonly string[],
+  resolveHost: HttpResolveHost
+): Promise<SafeHttpUrlResult> {
+  if (!inputUrl?.trim()) {
+    return {
+      success: false,
+      error: createHttpToolError("http_missing_url", "HTTP GET url is required."),
+    };
+  }
+
+  let url: URL;
+
+  try {
+    url = new URL(inputUrl);
+  } catch {
+    return {
+      success: false,
+      error: createHttpToolError("http_invalid_url", "HTTP GET url must be a valid URL."),
+    };
+  }
+
+  if (url.protocol !== "https:") {
+    return {
+      success: false,
+      error: createHttpToolError("http_insecure_protocol_denied", "Only HTTPS URLs are allowed."),
+    };
+  }
+
+  if (url.username || url.password) {
+    return {
+      success: false,
+      error: createHttpToolError(
+        "http_credentials_denied",
+        "Credentials embedded in URLs are not allowed."
+      ),
+    };
+  }
+
+  if (!allowlist.includes(url.origin)) {
+    return {
+      success: false,
+      error: createHttpToolError(
+        "http_host_not_allowlisted",
+        `Origin "${url.origin}" is not allowlisted.`
+      ),
+    };
+  }
+
+  if (isBlockedNetworkTarget(url.hostname)) {
+    return {
+      success: false,
+      error: createHttpToolError(
+        "http_private_network_denied",
+        "Localhost, loopback, link-local, and private network targets are not allowed."
+      ),
+    };
+  }
+
+  if (!isIP(normalizeHostname(url.hostname))) {
+    let resolvedAddresses: string[];
+
+    try {
+      resolvedAddresses = await resolveHost(url.hostname);
+    } catch {
+      return {
+        success: false,
+        error: createHttpToolError("http_dns_lookup_failed", "Could not resolve HTTP target host."),
+      };
+    }
+
+    if (resolvedAddresses.some((address) => isBlockedNetworkTarget(address))) {
+      return {
+        success: false,
+        error: createHttpToolError(
+          "http_private_network_denied",
+          "Resolved host points to a local, loopback, link-local, or private network target."
+        ),
+      };
+    }
+  }
+
+  return {
+    success: true,
+    url,
+  };
+}
+
+function sanitizeRequestHeaders(headers: Record<string, string> | undefined): {
+  success: boolean;
+  headers?: Record<string, string>;
+  error?: AgentOSError;
+} {
+  const safeHeaders: Record<string, string> = {};
+
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    const normalizedName = name.toLowerCase();
+
+    if (SENSITIVE_HEADER_NAMES.has(normalizedName)) {
+      return {
+        success: false,
+        error: createHttpToolError(
+          "http_sensitive_header_denied",
+          `Sensitive request header "${name}" is not allowed.`
+        ),
+      };
+    }
+
+    safeHeaders[name] = value;
+  }
+
+  return {
+    success: true,
+    headers: safeHeaders,
+  };
+}
+
+async function readHttpBody(response: Response, maxResponseBytes: number): Promise<HttpBodyResult> {
+  if (!response.body) {
+    const buffer = await response.arrayBuffer();
+
+    if (buffer.byteLength > maxResponseBytes) {
+      throw createHttpToolError(
+        "http_response_too_large",
+        "HTTP response exceeded maximum response size."
+      );
+    }
+
+    return {
+      body: new TextDecoder().decode(buffer),
+      bytesRead: buffer.byteLength,
+    };
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytesRead = 0;
+
+  try {
+    while (true) {
+      const read = await reader.read();
+
+      if (read.done) {
+        break;
+      }
+
+      bytesRead += read.value.byteLength;
+
+      if (bytesRead > maxResponseBytes) {
+        throw createHttpToolError(
+          "http_response_too_large",
+          "HTTP response exceeded maximum response size."
+        );
+      }
+
+      chunks.push(read.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bodyBytes = new Uint8Array(bytesRead);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    bodyBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return {
+    body: new TextDecoder().decode(bodyBytes),
+    bytesRead,
+  };
+}
+
+function safeResponseHeaders(headers: Headers): Record<string, string> {
+  const output: Record<string, string> = {};
+
+  headers.forEach((value, name) => {
+    output[name] = SENSITIVE_HEADER_NAMES.has(name.toLowerCase()) ? "[redacted]" : value;
+  });
+
+  return output;
+}
+
+function redactHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  const output: Record<string, string> = {};
+
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    output[name] = SENSITIVE_HEADER_NAMES.has(name.toLowerCase()) ? "[redacted]" : value;
+  }
+
+  return output;
+}
+
+function isBlockedNetworkTarget(hostname: string): boolean {
+  const host = normalizeHostname(hostname);
+
+  if (host === "localhost" || host.endsWith(".localhost")) {
+    return true;
+  }
+
+  const ipVersion = isIP(host);
+
+  if (ipVersion === 4) {
+    return isBlockedIPv4(host);
+  }
+
+  if (ipVersion === 6) {
+    return isBlockedIPv6(host);
+  }
+
+  return false;
+}
+
+async function resolveHostWithDNS(hostname: string): Promise<string[]> {
+  const addresses = await lookup(hostname, {
+    all: true,
+  });
+
+  return addresses.map((address) => address.address);
+}
+
+function normalizeHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/^\[/, "").replace(/\]$/, "");
+}
+
+function isBlockedIPv4(ipAddress: string): boolean {
+  const parts = ipAddress.split(".").map((part) => Number(part));
+  const [first = 0, second = 0] = parts;
+
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
+function isBlockedIPv6(ipAddress: string): boolean {
+  const normalized = ipAddress.toLowerCase();
+
+  return (
+    normalized === "::1" ||
+    normalized === "::" ||
+    normalized.startsWith("fe80:") ||
+    normalized.startsWith("fc") ||
+    normalized.startsWith("fd")
+  );
 }
 
 async function resolveExistingPath(
@@ -766,10 +1281,56 @@ function failedToolResult<Output>(
   };
 }
 
+function failedHttpToolResult<Output>(
+  startedAt: number,
+  error: AgentOSError | undefined
+): ToolExecutionResult<Output> {
+  return {
+    success: false,
+    durationMs: Date.now() - startedAt,
+    errors: [error ?? createHttpToolError("http_unknown_error", "HTTP GET request failed.")],
+  };
+}
+
 function createFilesystemError(code: string, message: string): AgentOSError {
   return {
     code,
     message,
     recoverable: true,
   };
+}
+
+function createHttpToolError(code: string, message: string): AgentOSError {
+  return {
+    code,
+    message,
+    recoverable: true,
+  };
+}
+
+function normalizeHttpError(error: unknown): AgentOSError {
+  if (isAgentOSError(error)) {
+    return error;
+  }
+
+  if (error instanceof Error && error.name === "AbortError") {
+    return createHttpToolError("http_timeout", "HTTP GET request exceeded timeout.");
+  }
+
+  if (error instanceof Error && error.message === "agentos_http_timeout") {
+    return createHttpToolError("http_timeout", "HTTP GET request exceeded timeout.");
+  }
+
+  return createHttpToolError("http_request_failed", "HTTP GET request failed.");
+}
+
+function isAgentOSError(error: unknown): error is AgentOSError {
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    "message" in error &&
+    typeof (error as AgentOSError).code === "string" &&
+    typeof (error as AgentOSError).message === "string"
+  );
 }

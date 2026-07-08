@@ -131,6 +131,12 @@ Run the filesystem connector example:
 pnpm example:filesystem
 ```
 
+Run the HTTP connector example:
+
+```bash
+pnpm example:http
+```
+
 Run the local quality gate:
 
 ```bash
@@ -338,6 +344,40 @@ Security docs:
 - [Policy Engine](docs/security/policy-engine.md)
 - [Connector Author Checklist](docs/security/security-checklist.md)
 - [Connector Threat Model](docs/security/threat-model.md)
+
+## HTTP Connector
+
+`createHttpConnector()` creates a secure network connector for controlled HTTPS
+GET requests. It exposes network access through `HttpGetTool`, not through the
+execution engine.
+
+```ts
+import { AgentOSRegistry, createHttpConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const httpConnector = createHttpConnector({
+  allowlist: ["https://example.com", "https://api.github.com"],
+  timeoutMs: 5000,
+  maxResponseBytes: 1024 * 1024,
+});
+
+registry.registerConnectorBundle(httpConnector);
+```
+
+Safety model:
+
+- only HTTPS GET is supported
+- hosts must match the configured allowlist
+- redirects are disabled
+- localhost, loopback, link-local, and private IP targets are rejected
+- allowlisted hostnames that resolve to private IP targets are rejected
+- credentials embedded in URLs are rejected
+- timeouts and maximum response size are enforced
+- sensitive request headers such as `authorization` and `cookie` are rejected
+- sensitive response headers such as `set-cookie` are redacted
+
+Current limitations: no authentication, cookies, sessions, request bodies,
+state-changing methods, WebSockets, streaming API, or provider-specific clients.
 
 ## Run An Agent
 

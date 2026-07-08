@@ -262,3 +262,56 @@ Safety model:
 
 This is a real local connector. It does not call external APIs and does not
 provide authentication, file watching, or remote storage behavior.
+
+## `createHttpConnector(options)`
+
+Creates a secure HTTP connector for controlled HTTPS GET requests.
+
+Required options:
+
+- `allowlist`: HTTPS origins the connector may access
+
+Optional options:
+
+- `timeoutMs`
+- `maxResponseBytes`
+- `id`
+- `name`
+- `description`
+- `version`
+- `fetchImplementation`
+
+The connector exposes:
+
+- network capability
+- retrieval capability
+- `HttpGetTool`
+
+Example:
+
+```ts
+import { AgentOSRegistry, createHttpConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const httpConnector = createHttpConnector({
+  allowlist: ["https://example.com"],
+});
+
+registry.registerConnectorBundle(httpConnector);
+```
+
+Safety behavior:
+
+- only HTTPS URLs are allowed
+- only GET is supported
+- redirects are rejected
+- localhost, loopback, link-local, and private IP targets are rejected
+- allowlisted hostnames that resolve to private IP targets are rejected
+- credentials embedded in URLs are rejected
+- responses above `maxResponseBytes` fail safely
+- requests exceeding `timeoutMs` fail safely
+- sensitive request headers are rejected
+- sensitive response headers are redacted
+
+Current limitations: no authentication, OAuth, cookies, sessions, POST, PUT,
+DELETE, WebSockets, streaming, or provider-specific clients.

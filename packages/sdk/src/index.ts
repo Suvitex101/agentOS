@@ -74,10 +74,19 @@ export type {
   MemoryWriteInput,
   MemoryWriteResult,
 } from "@agentos/memory";
-export { agentOSConnectors, createFilesystemConnector } from "@agentos/connectors";
+export {
+  agentOSConnectors,
+  createFilesystemConnector,
+  createHttpConnector,
+} from "@agentos/connectors";
 export type {
   FileEntry,
   FilesystemConnectorOptions,
+  HttpConnectorOptions,
+  HttpFetch,
+  HttpGetInput,
+  HttpGetOutput,
+  HttpResolveHost,
   ListFilesInput,
   ListFilesOutput,
   ReadFileInput,

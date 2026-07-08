@@ -15,6 +15,7 @@ Covered components:
 - connector bundles
 - tool execution boundaries
 - local filesystem connector
+- HTTP connector
 - future network and cloud connectors
 
 ## Threats
@@ -41,6 +42,16 @@ Future work:
 
 Risk: a future HTTP connector fetches internal metadata services or private
 network resources.
+
+Current mitigation in `HttpConnector`:
+
+- only HTTPS GET is supported
+- allowed destinations must match configured origins
+- localhost and `.localhost` hostnames are rejected
+- loopback, link-local, and RFC1918 IP literals are rejected
+- DNS results are checked for loopback, link-local, and RFC1918 addresses
+- redirects are disabled
+- response size and timeout limits are enforced
 
 Future mitigation:
 
@@ -125,6 +136,24 @@ Declared access:
 
 Important limitation: the connector can read and write within its configured
 workspace. Developers should choose `workspaceRoot` carefully.
+
+### HttpConnector
+
+Current risk: `Medium`
+
+Declared permissions:
+
+- `NetworkAccess`
+
+Declared access:
+
+- `networkAccess: true`
+- `filesystemAccess: false`
+- `secretsAccess: false`
+
+Important limitation: the connector only supports GET requests to configured
+HTTPS origins. It does not implement authentication, cookies, request bodies, or
+state-changing methods.
 
 ## Open Questions
 

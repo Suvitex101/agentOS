@@ -175,6 +175,7 @@ export enum ConnectorRiskLevel {
 export enum ConnectorTrustLevel {
   Unknown = "unknown",
   Local = "local",
+  Remote = "remote",
   Community = "community",
   Verified = "verified",
   Official = "official",

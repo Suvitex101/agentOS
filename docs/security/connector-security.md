@@ -73,6 +73,7 @@ Trust levels:
 
 - `Unknown`
 - `Local`
+- `Remote`
 - `Community`
 - `Verified`
 - `Official`

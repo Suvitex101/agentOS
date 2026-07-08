@@ -24,7 +24,8 @@
     "example:custom-tool": "tsx examples/custom-tool/index.ts",
     "example:research-connector": "tsx examples/research-connector/index.ts",
     "example:community-connector": "tsx examples/community-connector/index.ts",
-    "example:filesystem": "tsx examples/filesystem-connector/index.ts"
+    "example:filesystem": "tsx examples/filesystem-connector/index.ts",
+    "example:http": "tsx examples/http-connector/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
