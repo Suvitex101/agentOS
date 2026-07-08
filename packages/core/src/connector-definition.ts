@@ -2,12 +2,16 @@ import {
   CapabilityCategory,
   ConnectorAuthType,
   ConnectorHealthStatus,
+  ConnectorPermission,
+  ConnectorRiskLevel,
+  ConnectorTrustLevel,
   ConnectorVisibility,
   type AgentOSError,
   type AgentOSMetadata,
   type Capability,
   type ConnectorManifest,
   type ConnectorProvider,
+  type ConnectorSecurityProfile,
   type RegisteredTool,
   type Resource,
   type ResourceType,
@@ -33,6 +37,7 @@ export interface ConnectorDefinitionConfig {
   metadata?: AgentOSMetadata;
   provider?: ConnectorProvider;
   authType?: ConnectorAuthType;
+  security?: ConnectorSecurityProfile;
   capabilities: Array<string | Capability>;
   tools: RegisteredTool[];
   resources?: Resource[];
@@ -44,6 +49,7 @@ export interface ConnectorDefinition extends ConnectorManifest {
   author?: ToolAuthor;
   tags: string[];
   visibility: ConnectorVisibility;
+  security?: ConnectorSecurityProfile;
   resources: Resource[];
   health(): ConnectorHealthCheckResult;
   inspect(): ConnectorInspection;
@@ -59,6 +65,10 @@ export interface ConnectorInspection {
   tags: string[];
   visibility: ConnectorVisibility;
   metadata?: AgentOSMetadata;
+  permissions: ConnectorPermission[];
+  riskLevel?: ConnectorRiskLevel;
+  trustLevel?: ConnectorTrustLevel;
+  securityProfile?: ConnectorSecurityProfile;
   health: ConnectorHealthCheckResult;
   capabilityCount: number;
   toolCount: number;
@@ -72,6 +82,7 @@ export interface ConnectorSummary {
   description: string;
   version: string;
   visibility: ConnectorVisibility;
+  riskLevel?: ConnectorRiskLevel;
   capabilities: string[];
   toolCount: number;
   resourceCount: number;
@@ -114,6 +125,7 @@ export function defineConnector(config: ConnectorDefinitionConfig): ConnectorDef
   const capabilities = Object.freeze(normalizeCapabilities(config.id, config.capabilities));
   const resourceTypes = Object.freeze(uniqueResourceTypes(resources));
   const visibility = config.visibility ?? ConnectorVisibility.Private;
+  const security = config.security ? freezeSecurityProfile(config.security) : undefined;
   const provider =
     config.provider ??
     Object.freeze({
@@ -139,6 +151,7 @@ export function defineConnector(config: ConnectorDefinitionConfig): ConnectorDef
     author: config.author,
     tags: tags as string[],
     visibility,
+    security,
     resources: resources as Resource[],
     metadata: config.metadata,
     health() {
@@ -154,6 +167,10 @@ export function defineConnector(config: ConnectorDefinitionConfig): ConnectorDef
         tags: [...tags],
         visibility,
         metadata: config.metadata,
+        permissions: [...(security?.permissions ?? [])],
+        riskLevel: security?.riskLevel,
+        trustLevel: security?.trustLevel,
+        securityProfile: security,
         health: normalizeHealth(config.health()),
         capabilityCount: capabilities.length,
         toolCount: tools.length,
@@ -168,6 +185,7 @@ export function defineConnector(config: ConnectorDefinitionConfig): ConnectorDef
         description: config.description,
         version: config.version,
         visibility,
+        riskLevel: security?.riskLevel,
         capabilities: capabilities.map((capability) => capability.id),
         toolCount: tools.length,
         resourceCount: resources.length,
@@ -265,6 +283,7 @@ export function validateConnectorDefinitionConfig(
     "resource",
     (config.resources ?? []).map((resource) => resource.id)
   );
+  validateSecurityProfile(config.security, errors);
 
   return {
     valid: errors.length === 0,
@@ -303,6 +322,115 @@ function normalizeHealth(health: ConnectorHealthCheckResult): ConnectorHealthChe
   };
 }
 
+function freezeSecurityProfile(security: ConnectorSecurityProfile): ConnectorSecurityProfile {
+  return Object.freeze({
+    ...security,
+    permissions: Object.freeze([...security.permissions]) as ConnectorPermission[],
+  });
+}
+
+function validateSecurityProfile(
+  security: ConnectorSecurityProfile | undefined,
+  errors: AgentOSError[]
+): void {
+  if (!security) {
+    return;
+  }
+
+  const permissions = security.permissions ?? [];
+  const duplicatePermission = findDuplicate(permissions);
+
+  if (duplicatePermission) {
+    errors.push(
+      createValidationError(
+        "connector_security_duplicate_permission",
+        `Connector security profile includes duplicate permission "${duplicatePermission}".`
+      )
+    );
+  }
+
+  if (
+    (security.riskLevel === ConnectorRiskLevel.High ||
+      security.riskLevel === ConnectorRiskLevel.Critical) &&
+    permissions.length === 0
+  ) {
+    errors.push(
+      createValidationError(
+        "connector_security_missing_permissions",
+        "High-risk connectors must declare permissions."
+      )
+    );
+  }
+
+  if (hasNetworkPermission(permissions) && !security.networkAccess) {
+    errors.push(
+      createValidationError(
+        "connector_security_network_access_required",
+        "Connectors with network permissions must declare networkAccess."
+      )
+    );
+  }
+
+  if (security.networkAccess && !hasNetworkPermission(permissions)) {
+    errors.push(
+      createValidationError(
+        "connector_security_network_permission_required",
+        "Connectors with networkAccess must declare a network permission."
+      )
+    );
+  }
+
+  if (hasFilesystemPermission(permissions) && !security.filesystemAccess) {
+    errors.push(
+      createValidationError(
+        "connector_security_filesystem_access_required",
+        "Connectors with file permissions must declare filesystemAccess."
+      )
+    );
+  }
+
+  if (security.filesystemAccess && !hasFilesystemPermission(permissions)) {
+    errors.push(
+      createValidationError(
+        "connector_security_filesystem_permission_required",
+        "Connectors with filesystemAccess must declare a file permission."
+      )
+    );
+  }
+
+  if (permissions.includes(ConnectorPermission.SecretsAccess) && !security.secretsAccess) {
+    errors.push(
+      createValidationError(
+        "connector_security_secrets_access_required",
+        "Connectors with secrets access permission must declare secretsAccess."
+      )
+    );
+  }
+
+  if (security.secretsAccess && !permissions.includes(ConnectorPermission.SecretsAccess)) {
+    errors.push(
+      createValidationError(
+        "connector_security_secrets_permission_required",
+        "Connectors with secretsAccess must declare SecretsAccess permission."
+      )
+    );
+  }
+}
+
+function hasNetworkPermission(permissions: ConnectorPermission[]): boolean {
+  return (
+    permissions.includes(ConnectorPermission.NetworkAccess) ||
+    permissions.includes(ConnectorPermission.ExternalAPI)
+  );
+}
+
+function hasFilesystemPermission(permissions: ConnectorPermission[]): boolean {
+  return (
+    permissions.includes(ConnectorPermission.ReadFiles) ||
+    permissions.includes(ConnectorPermission.WriteFiles)
+  );
+}
+
 function uniqueResourceTypes(resources: readonly Resource[]): ResourceType[] {
   return [...new Set(resources.map((resource) => resource.type))];
 }
@@ -328,6 +456,20 @@ function addDuplicateErrors(errors: AgentOSError[], entityType: string, ids: str
 
     seen.add(id);
   }
+}
+
+function findDuplicate<T>(values: T[]): T | undefined {
+  const seen = new Set<T>();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      return value;
+    }
+
+    seen.add(value);
+  }
+
+  return undefined;
 }
 
 function capabilityCategoryFor(capabilityId: string): CapabilityCategory {

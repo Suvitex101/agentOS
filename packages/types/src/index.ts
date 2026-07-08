@@ -165,6 +165,31 @@ export enum ConnectorAuthType {
   Custom = "custom",
 }
 
+export enum ConnectorRiskLevel {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
+  Critical = "critical",
+}
+
+export enum ConnectorTrustLevel {
+  Unknown = "unknown",
+  Local = "local",
+  Community = "community",
+  Verified = "verified",
+  Official = "official",
+}
+
+export enum ConnectorPermission {
+  ReadFiles = "read_files",
+  WriteFiles = "write_files",
+  NetworkAccess = "network_access",
+  ExternalAPI = "external_api",
+  EnvironmentVariables = "environment_variables",
+  ExecuteCommands = "execute_commands",
+  SecretsAccess = "secrets_access",
+}
+
 export enum MemoryType {
   Fact = "fact",
   Preference = "preference",
@@ -671,6 +696,28 @@ export interface ConnectorManifest {
   version: ConnectorVersion;
   capabilities: ConnectorCapabilities;
   authType: ConnectorAuthType;
+  security?: ConnectorSecurityProfile;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ConnectorSecurityProfile {
+  riskLevel: ConnectorRiskLevel;
+  trustLevel?: ConnectorTrustLevel;
+  permissions: ConnectorPermission[];
+  requiresUserApproval: boolean;
+  networkAccess: boolean;
+  filesystemAccess: boolean;
+  secretsAccess: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ConnectorSecurityPolicy {
+  allowedRiskLevels?: ConnectorRiskLevel[];
+  deniedPermissions?: ConnectorPermission[];
+  requireApprovalFor?: ConnectorPermission[];
+  allowNetworkAccess?: boolean;
+  allowFilesystemAccess?: boolean;
+  allowSecretsAccess?: boolean;
   metadata?: AgentOSMetadata;
 }
 

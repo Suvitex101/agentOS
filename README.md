@@ -30,6 +30,8 @@ integration, database-backed memory, or dashboard functionality.
   current local flow.
 - [API Reference](docs/api-reference.md): starter reference for public SDK
   exports.
+- [Connector Security](docs/security/connector-security.md): security metadata,
+  permissions, and future policy model for connectors.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -319,6 +321,18 @@ Safety model:
 
 Current limitations: this connector is local-only, has no authentication model,
 does not implement file watching, and is not a remote storage connector.
+
+## Connector Security
+
+Connectors can declare security metadata such as risk level, trust level,
+permissions, and access flags. This is inspectable metadata today; runtime
+policy enforcement is future work.
+
+Security docs:
+
+- [Connector Security](docs/security/connector-security.md)
+- [Connector Author Checklist](docs/security/security-checklist.md)
+- [Connector Threat Model](docs/security/threat-model.md)
 
 ## Run An Agent
 

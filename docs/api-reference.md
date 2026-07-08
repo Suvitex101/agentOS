@@ -61,6 +61,7 @@ Important fields:
 - `capabilities`
 - `tools`
 - `resources`
+- `security`
 - `health()`
 
 The returned connector exposes:
@@ -71,6 +72,10 @@ The returned connector exposes:
 
 Connectors package capabilities, tools, and resources. They do not need to call
 external APIs.
+
+`security` is optional metadata today. It can declare connector risk level,
+trust level, permissions, and access flags such as `networkAccess`,
+`filesystemAccess`, and `secretsAccess`.
 
 ## `AgentOSRegistry`
 

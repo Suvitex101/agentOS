@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   AgentOSRegistry,
   ConnectorDefinitionValidationError,
+  ConnectorPermission,
+  ConnectorRiskLevel,
+  ConnectorTrustLevel,
   ConnectorVisibility,
   defineConnector,
   defineMessagingConnector,
@@ -108,6 +111,139 @@ describe("defineConnector", () => {
       capabilities: ["messaging", "communication"],
       toolCount: 1,
     });
+  });
+
+  it("exposes connector security metadata through inspect and summary", () => {
+    const connector = defineConnector({
+      id: "connector-secure",
+      name: "Secure Connector",
+      description: "Connector with explicit security metadata.",
+      version: "1.0.0",
+      capabilities: ["storage"],
+      tools: [testTool],
+      security: {
+        riskLevel: ConnectorRiskLevel.Medium,
+        trustLevel: ConnectorTrustLevel.Local,
+        permissions: [ConnectorPermission.ReadFiles],
+        requiresUserApproval: false,
+        networkAccess: false,
+        filesystemAccess: true,
+        secretsAccess: false,
+      },
+      health() {
+        return {
+          healthy: true,
+        };
+      },
+    });
+
+    expect(connector.inspect()).toMatchObject({
+      riskLevel: ConnectorRiskLevel.Medium,
+      trustLevel: ConnectorTrustLevel.Local,
+      permissions: [ConnectorPermission.ReadFiles],
+      securityProfile: {
+        filesystemAccess: true,
+        networkAccess: false,
+      },
+    });
+    expect(connector.summary()).toMatchObject({
+      riskLevel: ConnectorRiskLevel.Medium,
+    });
+  });
+
+  it("validates invalid security metadata", () => {
+    const validation = validateConnectorDefinitionConfig({
+      id: "connector-risky",
+      name: "Risky Connector",
+      description: "Invalid security metadata.",
+      version: "1.0.0",
+      capabilities: ["search"],
+      tools: [testTool],
+      security: {
+        riskLevel: ConnectorRiskLevel.High,
+        trustLevel: ConnectorTrustLevel.Unknown,
+        permissions: [],
+        requiresUserApproval: true,
+        networkAccess: true,
+        filesystemAccess: false,
+        secretsAccess: false,
+      },
+      health() {
+        return {
+          healthy: true,
+        };
+      },
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.map((error) => error.code)).toEqual([
+      "connector_security_missing_permissions",
+      "connector_security_network_permission_required",
+    ]);
+  });
+
+  it("requires explicit access flags for declared connector permissions", () => {
+    const validation = validateConnectorDefinitionConfig({
+      id: "connector-permissions",
+      name: "Permission Connector",
+      description: "Invalid permission flags.",
+      version: "1.0.0",
+      capabilities: ["storage"],
+      tools: [testTool],
+      security: {
+        riskLevel: ConnectorRiskLevel.Medium,
+        permissions: [
+          ConnectorPermission.ReadFiles,
+          ConnectorPermission.NetworkAccess,
+          ConnectorPermission.SecretsAccess,
+        ],
+        requiresUserApproval: true,
+        networkAccess: false,
+        filesystemAccess: false,
+        secretsAccess: false,
+      },
+      health() {
+        return {
+          healthy: true,
+        };
+      },
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.map((error) => error.code)).toEqual([
+      "connector_security_network_access_required",
+      "connector_security_filesystem_access_required",
+      "connector_security_secrets_access_required",
+    ]);
+  });
+
+  it("rejects duplicate security permissions", () => {
+    const validation = validateConnectorDefinitionConfig({
+      id: "connector-duplicate-security",
+      name: "Duplicate Security Connector",
+      description: "Invalid duplicate security permissions.",
+      version: "1.0.0",
+      capabilities: ["storage"],
+      tools: [testTool],
+      security: {
+        riskLevel: ConnectorRiskLevel.Medium,
+        permissions: [ConnectorPermission.ReadFiles, ConnectorPermission.ReadFiles],
+        requiresUserApproval: false,
+        networkAccess: false,
+        filesystemAccess: true,
+        secretsAccess: false,
+      },
+      health() {
+        return {
+          healthy: true,
+        };
+      },
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.map((error) => error.code)).toEqual([
+      "connector_security_duplicate_permission",
+    ]);
   });
 
   it("registers with the AgentOS registry without adapters", () => {

@@ -3,6 +3,9 @@ import path from "node:path";
 import { defineConnector, defineTool, type ConnectorDefinition } from "@agentos/core";
 import {
   CapabilityCategory,
+  ConnectorPermission,
+  ConnectorRiskLevel,
+  ConnectorTrustLevel,
   ResourceType,
   ToolCategory,
   ToolPermissionLevel,
@@ -401,6 +404,19 @@ export function createFilesystemConnector(
       },
     ],
     tags: ["filesystem", "storage", "search", "local"],
+    security: {
+      riskLevel: ConnectorRiskLevel.Medium,
+      trustLevel: ConnectorTrustLevel.Local,
+      permissions: [ConnectorPermission.ReadFiles, ConnectorPermission.WriteFiles],
+      requiresUserApproval: false,
+      networkAccess: false,
+      filesystemAccess: true,
+      secretsAccess: false,
+      metadata: {
+        workspaceRoot,
+        boundary: "workspaceRoot",
+      },
+    },
     metadata: {
       workspaceRoot,
       safety: "workspace-root-confined",

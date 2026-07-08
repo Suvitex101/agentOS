@@ -4,6 +4,9 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AgentOSRegistry,
+  ConnectorPermission,
+  ConnectorRiskLevel,
+  ConnectorTrustLevel,
   MemoryScope,
   MemoryType,
   createFilesystemConnector,
@@ -73,6 +76,20 @@ describe("FilesystemConnector", () => {
     expect(registry.findCapabilityById("search")).toBeDefined();
     expect(registry.listTools()).toHaveLength(4);
     expect(registry.listResources()).toHaveLength(1);
+  });
+
+  it("declares a filesystem-specific connector security profile", () => {
+    const connector = registry.findConnectorById("filesystem");
+
+    expect(connector?.security).toMatchObject({
+      riskLevel: ConnectorRiskLevel.Medium,
+      trustLevel: ConnectorTrustLevel.Local,
+      permissions: [ConnectorPermission.ReadFiles, ConnectorPermission.WriteFiles],
+      requiresUserApproval: false,
+      networkAccess: false,
+      filesystemAccess: true,
+      secretsAccess: false,
+    });
   });
 
   it("writes, reads, lists, and searches files inside the workspace", async () => {
