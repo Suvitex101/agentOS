@@ -30,7 +30,9 @@
     "example:provider-registry": "tsx examples/provider-registry/index.ts",
     "example:model-assisted-planner": "tsx examples/model-assisted-planner/index.ts",
     "example:openai-compatible-provider": "tsx examples/openai-compatible-provider/index.ts",
-    "example:credential-sdk": "tsx examples/credential-sdk/index.ts"
+    "example:credential-sdk": "tsx examples/credential-sdk/index.ts",
+    "example:live-model-agent": "tsx examples/live-model-agent/index.ts",
+    "smoke:live-model": "tsx examples/live-model-agent/index.ts --live"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

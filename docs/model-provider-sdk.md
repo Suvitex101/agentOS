@@ -135,6 +135,18 @@ const transport = new HTTPModelProviderBase({
 Credentials remain references until request time. See
 [Credential SDK](credential-sdk.md).
 
+## Live Model Workflow
+
+`examples/live-model-agent` demonstrates the first complete model-assisted
+workflow. By default it uses mocked transport. With `pnpm smoke:live-model`, it
+can call an OpenAI-compatible endpoint when these variables are configured:
+
+- `MODEL_BASE_URL`
+- `MODEL_NAME`
+- `MODEL_API_KEY`
+
+Live mode is never part of CI. See [Live Model Testing](live-model-testing.md).
+
 ## Provider Capabilities
 
 Providers declare capabilities as extensible strings. AgentOS exports common

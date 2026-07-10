@@ -97,6 +97,14 @@ The transport resolves the credential at request time and applies it as an
 authorization header. The public transport config exposes only a redacted
 credential reference.
 
+The live model smoke test uses this path with:
+
+```text
+MODEL_API_KEY -> CredentialResolver -> Authorization: Bearer <token>
+```
+
+See [Live Model Testing](live-model-testing.md).
+
 ## Redaction
 
 AgentOS exports shared redaction helpers:

@@ -38,6 +38,8 @@ integration, database-backed memory, or dashboard functionality.
   transport base and OpenAI-compatible adapter foundation.
 - [Credential SDK](docs/credential-sdk.md): framework-wide credential
   references, resolution, and redaction.
+- [Live Model Testing](docs/live-model-testing.md): opt-in OpenAI-compatible
+  workflow smoke testing.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -172,6 +174,23 @@ Run the credential SDK example:
 ```bash
 pnpm example:credential-sdk
 ```
+
+Run the live-model workflow in deterministic mode:
+
+```bash
+pnpm example:live-model-agent
+```
+
+Run the opt-in live smoke test:
+
+```bash
+MODEL_BASE_URL="https://your-openai-compatible-endpoint" \
+MODEL_NAME="your-model" \
+MODEL_API_KEY="your-token" \
+pnpm smoke:live-model
+```
+
+If live configuration is missing, the smoke test skips gracefully.
 
 Run the local quality gate:
 
@@ -480,6 +499,29 @@ reference-and-resolver model.
 
 See [docs/credential-sdk.md](docs/credential-sdk.md).
 
+## Live Model Workflow
+
+`examples/live-model-agent` demonstrates a complete workflow:
+
+```text
+agent.run()
+  -> ModelAssistedPlanner
+  -> ModelProviderResolver
+  -> HTTPModelProviderBase
+  -> CredentialResolver
+  -> Execution Engine
+  -> ToolResolver
+  -> FilesystemConnector
+  -> Memory
+  -> Result
+```
+
+The default mode is deterministic and safe for CI. Live mode is opt-in through
+`pnpm smoke:live-model` and requires `MODEL_BASE_URL`, `MODEL_NAME`, and
+`MODEL_API_KEY`.
+
+See [docs/live-model-testing.md](docs/live-model-testing.md).
+
 ## Provider Registry
 
 Model providers are first-class discoverable objects in the AgentOS registry.
@@ -574,6 +616,7 @@ pnpm example:provider-registry
 pnpm example:model-assisted-planner
 pnpm example:openai-compatible-provider
 pnpm example:credential-sdk
+pnpm example:live-model-agent
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,

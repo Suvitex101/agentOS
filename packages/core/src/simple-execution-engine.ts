@@ -540,6 +540,11 @@ async function executeTool(
 }
 
 function createToolInput(input: StepExecutionInput, tool: RegisteredTool): Record<string, unknown> {
+  const stepInput =
+    input.step.input && typeof input.step.input === "object" && !Array.isArray(input.step.input)
+      ? (input.step.input as Record<string, unknown>)
+      : {};
+
   return {
     taskId: input.task.id,
     taskInput: input.task.input,
@@ -552,6 +557,7 @@ function createToolInput(input: StepExecutionInput, tool: RegisteredTool): Recor
     toolId: tool.id,
     toolName: tool.name,
     agentId: input.agent.id,
+    ...stepInput,
   };
 }
 

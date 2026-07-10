@@ -35,6 +35,7 @@ interface ProviderPlanStep {
   type?: unknown;
   requiredTool?: unknown;
   requiredCapability?: unknown;
+  input?: unknown;
 }
 
 interface ProviderPlanPayload {
@@ -47,6 +48,7 @@ interface NormalizedProviderPlan {
     type: PlanStepType;
     requiredTool?: string;
     requiredCapability?: string;
+    input?: unknown;
   }>;
   parsingStatus: "parsed";
 }
@@ -412,7 +414,7 @@ function defaultSystemPrompt(): string {
   return [
     "You are a planning component inside AgentOS.",
     "Return only a JSON object with a steps array.",
-    "Each step must include a short description and may include type, requiredTool, or requiredCapability.",
+    "Each step must include a short description and may include type, requiredTool, requiredCapability, or input.",
     "Do not execute tools. Do not return tool results. Do not mutate registries.",
   ].join(" ");
 }
@@ -510,6 +512,7 @@ function normalizeProviderStep(
     type: normalizeStepType(providerStep.type),
     requiredTool,
     requiredCapability,
+    input: providerStep.input,
   };
 }
 
@@ -569,6 +572,7 @@ function createPlanStep(
     type: step.type,
     description: step.description,
     requiredTool: step.requiredTool,
+    input: step.input,
     status: PlanStepStatus.Pending,
     metadata: {
       requiredCapability: step.requiredCapability,
