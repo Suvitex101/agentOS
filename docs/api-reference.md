@@ -188,6 +188,40 @@ Resolution inputs can include:
 The resolver exists so planners and future orchestration code do not depend on
 registry implementation details directly.
 
+## `ModelAssistedPlanner`
+
+Provider-backed planner that requests providers through `ModelProviderResolver`.
+
+Constructor inputs:
+
+- `providerResolver`
+- `fallbackPlanner`
+- `options`
+
+Options include:
+
+- provider request
+- `temperature`
+- `maxTokens`
+- `systemPrompt`
+- `fallback`
+- `includeRawResponse`
+
+Provider requests can specify:
+
+- `providerId`
+- `requiredCapabilities`
+- `preferredCapabilities`
+- `allowDefaultProvider`
+
+Current behavior: the planner requires `text-generation`, prefers `reasoning`
+and `structured-output`, asks the provider for JSON steps, validates and
+normalizes the result, and returns a regular AgentOS `Plan`.
+
+Provider output is untrusted. AgentOS rejects privileged provider-generated
+fields such as ids, task ids, statuses, timestamps, tool outputs, and registry
+mutations.
+
 ## `SecurityPolicyEngine`
 
 Pure evaluator for connector security profiles.

@@ -141,14 +141,48 @@ registry directly. This keeps planner implementations independent of registry
 storage details and preserves the same separation already used for tool
 resolution.
 
+## Model-Assisted Planning
+
+`ModelAssistedPlanner` is the first planner that can request a provider through
+`ModelProviderResolver`.
+
+The flow is:
+
+```text
+Task
+  -> Planner
+  -> Provider Request
+  -> ModelProviderResolver
+  -> Provider Capability Match
+  -> Model Generation
+  -> Validated Plan
+```
+
+The planner asks for provider capabilities instead of vendor brands. It requires
+`text-generation` and prefers `reasoning` and `structured-output`.
+
+Provider output is treated as untrusted input:
+
+- provider-generated ids are rejected
+- provider-generated task ids are rejected
+- provider-generated statuses and timestamps are rejected
+- provider-generated tool outputs are rejected
+- registry mutations are rejected
+- AgentOS creates all plan ids, step ids, timestamps, statuses, and task links
+
+If provider planning fails, `fallback: "rule-based"` delegates to
+`RuleBasedPlanner`. `fallback: "fail"` throws a typed planning error.
+
+`RuleBasedPlanner` remains fully independent and deterministic.
+
 ## Current Limitations
 
 - no OpenAI, Anthropic, Gemini, or Ollama integration
 - no API keys
 - no authentication
 - no streaming
-- no planner integration
 - no runtime integration
+- no external provider integration
 
 Future provider integrations should build on this contract without making
 AgentOS model-centric.

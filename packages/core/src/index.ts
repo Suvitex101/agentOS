@@ -8,6 +8,8 @@ import {
 
 export { RuleBasedPlanner } from "./rule-based-planner";
 export type { RuleBasedPlannerOptions } from "./rule-based-planner";
+export { ModelAssistedPlanner } from "./model-assisted-planner";
+export type { ModelAssistedPlannerConstructorOptions } from "./model-assisted-planner";
 export { SimpleExecutionEngine } from "./simple-execution-engine";
 export type { SimpleExecutionEngineOptions } from "./simple-execution-engine";
 export { createMockTools } from "./mock-tools";

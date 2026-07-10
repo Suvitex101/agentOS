@@ -1,10 +1,10 @@
 import {
   ModelFinishReason,
+  ModelProviderCapability,
   type AgentOSError,
   type AgentOSMetadata,
   type ModelGenerationRequest,
   type ModelGenerationResponse,
-  type ModelProviderCapability,
   type ModelProvider,
   type ToolAuthor,
 } from "@agentos/types";
@@ -194,7 +194,7 @@ export const MockModelProvider = defineModelProvider({
   name: "Mock Provider",
   description: "Deterministic local provider for tests and examples.",
   version: "1.0.0",
-  capabilities: ["generation", "testing"],
+  capabilities: [ModelProviderCapability.TextGeneration, "generation", "testing"],
   tags: ["mock", "local"],
   generate(request) {
     return {
@@ -214,7 +214,7 @@ export const EchoModelProvider = defineModelProvider({
   name: "Echo Provider",
   description: "Returns the prompt exactly as provided.",
   version: "1.0.0",
-  capabilities: ["generation", "echo"],
+  capabilities: [ModelProviderCapability.TextGeneration, "generation", "echo"],
   tags: ["echo", "local"],
   generate(request) {
     return {

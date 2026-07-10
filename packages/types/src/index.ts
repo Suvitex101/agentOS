@@ -604,6 +604,26 @@ export interface PlannerOptions {
   metadata?: AgentOSMetadata;
 }
 
+export interface PlannerProviderRequest {
+  providerId?: string;
+  requiredCapabilities?: ModelProviderCapability[];
+  preferredCapabilities?: ModelProviderCapability[];
+  allowDefaultProvider?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export type ModelAssistedPlannerFallback = "rule-based" | "fail";
+
+export interface ModelAssistedPlannerOptions extends PlannerOptions {
+  provider?: PlannerProviderRequest;
+  temperature?: number;
+  maxTokens?: number;
+  systemPrompt?: string;
+  fallback?: ModelAssistedPlannerFallback;
+  includeRawResponse?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
 export interface PlanValidationResult {
   valid: boolean;
   errors: AgentOSError[];

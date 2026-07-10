@@ -151,6 +151,12 @@ Run the provider registry example:
 pnpm example:provider-registry
 ```
 
+Run the model-assisted planner example:
+
+```bash
+pnpm example:model-assisted-planner
+```
+
 Run the local quality gate:
 
 ```bash
@@ -442,6 +448,32 @@ const provider = resolver.resolve().provider;
 Planners should use a resolver boundary instead of querying registry internals
 directly. Planner integration is future work.
 
+## Model-Assisted Planner
+
+`ModelAssistedPlanner` lets planners request a reasoning provider through
+`ModelProviderResolver` without knowing registry internals, provider brands, API
+keys, or network details.
+
+The planner asks for capabilities such as `text-generation`, prefers reasoning
+and structured output, calls a local provider, then treats the provider response
+as untrusted JSON. AgentOS creates ids, timestamps, task ids, statuses, and plan
+metadata itself.
+
+```ts
+import { ModelAssistedPlanner, ModelProviderResolver, RuleBasedPlanner } from "@agentos/sdk";
+
+const planner = new ModelAssistedPlanner({
+  providerResolver: new ModelProviderResolver({ registry }),
+  fallbackPlanner: new RuleBasedPlanner(),
+  options: {
+    fallback: "rule-based",
+  },
+});
+```
+
+Current examples use only deterministic local providers. No external model
+provider integrations exist yet.
+
 ## Run An Agent
 
 ```ts
@@ -486,10 +518,11 @@ pnpm example:filesystem
 pnpm example:http
 pnpm example:model-provider
 pnpm example:provider-registry
+pnpm example:model-assisted-planner
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,
-tool/connector authoring APIs, and provider discovery.
+tool/connector authoring APIs, provider discovery, and model-assisted planning.
 
 ## Testing
 
