@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   AgentOSRegistry,
+  CredentialResolver,
+  CredentialType,
   HTTPModelProviderBase,
   ModelAssistedPlanner,
   ModelFinishReason,
@@ -269,6 +271,84 @@ describe("HTTPModelProviderBase", () => {
       expect(agentOSError.message).toContain("[redacted]");
       expect(agentOSError.message).not.toContain("sk-secret");
     }
+  });
+
+  it("resolves configured credentials at request time", async () => {
+    let capturedHeaders: HeadersInit | undefined;
+    const resolver = new CredentialResolver({
+      environment: {
+        MODEL_API_KEY: "sk-env-secret",
+      },
+    });
+    const provider = createOpenAICompatibleProvider({
+      model: "test-model",
+      transport: {
+        baseUrl: "https://api.example.test",
+        credential: {
+          type: CredentialType.Environment,
+          name: "MODEL_API_KEY",
+        },
+        credentialResolver: resolver,
+        fetchImplementation: async (_input, init) => {
+          capturedHeaders = init?.headers;
+
+          return createJsonResponse(successBody);
+        },
+      },
+    });
+
+    await provider.generate({
+      prompt: "test",
+    });
+
+    expect(capturedHeaders).toMatchObject({
+      authorization: "Bearer sk-env-secret",
+    });
+  });
+
+  it("does not expose configured static credentials through transport config", () => {
+    const transport = new HTTPModelProviderBase({
+      baseUrl: "https://api.example.test",
+      credential: {
+        type: CredentialType.Static,
+        value: "sk-static-secret",
+      },
+      fetchImplementation: async () => createJsonResponse(successBody),
+    });
+
+    expect(JSON.stringify(transport.config)).not.toContain("sk-static-secret");
+    expect(transport.config.credential).toMatchObject({
+      type: CredentialType.Static,
+      redacted: true,
+    });
+  });
+
+  it("returns redacted credential resolution errors", async () => {
+    const provider = createOpenAICompatibleProvider({
+      model: "test-model",
+      transport: {
+        baseUrl: "https://api.example.test",
+        credential: {
+          type: CredentialType.Environment,
+          name: "MODEL_API_KEY",
+        },
+        credentialResolver: new CredentialResolver({
+          environment: {},
+        }),
+        fetchImplementation: async () => createJsonResponse(successBody),
+      },
+    });
+
+    await expect(provider.generate({ prompt: "test" })).rejects.toMatchObject({
+      code: "http_model_provider_credential_resolution_failed",
+      metadata: {
+        reference: {
+          type: CredentialType.Environment,
+          name: "MODEL_API_KEY",
+          redacted: true,
+        },
+      },
+    });
   });
 
   it("works with ModelAssistedPlanner through the provider resolver", async () => {

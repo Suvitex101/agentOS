@@ -36,6 +36,8 @@ integration, database-backed memory, or dashboard functionality.
   future reasoning engines.
 - [HTTP Model Provider Foundation](docs/http-model-provider.md): secure
   transport base and OpenAI-compatible adapter foundation.
+- [Credential SDK](docs/credential-sdk.md): framework-wide credential
+  references, resolution, and redaction.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -163,6 +165,12 @@ Run the OpenAI-compatible provider foundation example:
 
 ```bash
 pnpm example:openai-compatible-provider
+```
+
+Run the credential SDK example:
+
+```bash
+pnpm example:credential-sdk
 ```
 
 Run the local quality gate:
@@ -451,6 +459,27 @@ adapter is `createOpenAICompatibleProvider()`.
 See [docs/http-model-provider.md](docs/http-model-provider.md) and
 `examples/openai-compatible-provider`.
 
+## Credential SDK
+
+AgentOS components can reference credentials without embedding secret values in
+definitions, metadata, traces, logs, or source code.
+
+```ts
+import { CredentialResolver, CredentialType } from "@agentos/sdk";
+
+const resolver = new CredentialResolver();
+const result = resolver.resolve({
+  type: CredentialType.Environment,
+  name: "MODEL_API_KEY",
+});
+```
+
+Static credentials are supported for development and testing only. Future
+connectors, providers, databases, and cloud services should use the same
+reference-and-resolver model.
+
+See [docs/credential-sdk.md](docs/credential-sdk.md).
+
 ## Provider Registry
 
 Model providers are first-class discoverable objects in the AgentOS registry.
@@ -544,11 +573,12 @@ pnpm example:model-provider
 pnpm example:provider-registry
 pnpm example:model-assisted-planner
 pnpm example:openai-compatible-provider
+pnpm example:credential-sdk
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,
 tool/connector authoring APIs, provider discovery, model-assisted planning, and
-the mocked HTTP model provider foundation.
+the mocked HTTP model provider foundation, and credential resolution.
 
 ## Testing
 

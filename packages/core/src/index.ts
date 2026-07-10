@@ -68,6 +68,14 @@ export type {
 export { ModelProviderResolver } from "./model-provider-resolver";
 export type { ModelProviderResolverOptions } from "./model-provider-resolver";
 export { SecurityPolicyEngine } from "./security-policy-engine";
+export {
+  CredentialResolver,
+  redactCredentialReference,
+  redactMetadata,
+  redactSecretValue,
+  validateCredentialReference,
+} from "./credential-resolver";
+export type { CredentialResolverOptions } from "./credential-resolver";
 export { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 export type { AgentOSRegistryOptions, ConnectorBundleRegistration } from "./agentos-registry";
 export { LocalCommunityConnector } from "./local-community-connector";

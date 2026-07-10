@@ -120,6 +120,21 @@ const provider = createOpenAICompatibleProvider({
 The example at `examples/openai-compatible-provider` uses a deterministic mocked
 transport. It does not call a live provider and does not require API keys.
 
+Remote provider transports can use the framework-wide Credential SDK:
+
+```ts
+const transport = new HTTPModelProviderBase({
+  baseUrl: "https://api.example.com",
+  credential: {
+    type: "environment",
+    name: "MODEL_API_KEY",
+  },
+});
+```
+
+Credentials remain references until request time. See
+[Credential SDK](credential-sdk.md).
+
 ## Provider Capabilities
 
 Providers declare capabilities as extensible strings. AgentOS exports common
@@ -215,7 +230,7 @@ If provider planning fails, `fallback: "rule-based"` delegates to
 ## Current Limitations
 
 - no live OpenAI, Anthropic, Gemini, or Ollama integration
-- no API-key helper or secret manager
+- no OAuth, API-key management helper, or secret manager
 - no authentication
 - no streaming
 - no retries

@@ -29,7 +29,8 @@
     "example:model-provider": "tsx examples/model-provider/index.ts",
     "example:provider-registry": "tsx examples/provider-registry/index.ts",
     "example:model-assisted-planner": "tsx examples/model-assisted-planner/index.ts",
-    "example:openai-compatible-provider": "tsx examples/openai-compatible-provider/index.ts"
+    "example:openai-compatible-provider": "tsx examples/openai-compatible-provider/index.ts",
+    "example:credential-sdk": "tsx examples/credential-sdk/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

@@ -148,10 +148,40 @@ Configuration:
 - `defaultHeaders`
 - `allowLocalhost`
 - `userAgent`
+- `credential`
+- `credentialResolver`
 
 The base enforces HTTPS for remote hosts, rejects redirects, validates JSON
 responses, caps response size, measures duration, normalizes typed errors, and
 redacts common secrets.
+
+When configured with a credential reference, the base resolves the credential at
+request time and keeps only a redacted credential reference in public config.
+
+## `CredentialResolver`
+
+Resolves credential references for framework components.
+
+Supported reference types:
+
+- `CredentialType.Environment`
+- `CredentialType.Static`
+
+Important methods:
+
+- `resolve(reference)`
+- `validateReference(reference)`
+- `inspectReference(reference)`
+
+`resolve()` returns a typed result with `success`, `credential`, `errors`,
+`warnings`, and a redacted reference. Static credentials are intended for
+development and testing only.
+
+Redaction helpers:
+
+- `redactSecretValue()`
+- `redactMetadata()`
+- `redactCredentialReference()`
 
 ## `createOpenAICompatibleProvider(options)`
 

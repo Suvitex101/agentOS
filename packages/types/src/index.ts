@@ -198,6 +198,72 @@ export enum SecurityPolicyDecisionType {
   RequiresApproval = "requires_approval",
 }
 
+export const CredentialType = {
+  Environment: "environment",
+  Static: "static",
+} as const;
+
+export type CredentialType = (typeof CredentialType)[keyof typeof CredentialType] | (string & {});
+
+export interface EnvironmentCredentialReference {
+  type: typeof CredentialType.Environment;
+  name: string;
+  metadata?: AgentOSMetadata;
+}
+
+export interface StaticCredentialReference {
+  type: typeof CredentialType.Static;
+  value: string;
+  developmentOnly?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export type CredentialReference =
+  | EnvironmentCredentialReference
+  | StaticCredentialReference
+  | {
+      type: string;
+      [key: string]: unknown;
+    };
+
+export interface CredentialReferenceSummary {
+  type: CredentialType;
+  name?: string;
+  redacted: true;
+  developmentOnly?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ResolvedCredential {
+  type: CredentialType;
+  value: string;
+  source: string;
+  metadata?: AgentOSMetadata;
+}
+
+export interface CredentialResolutionResult {
+  success: boolean;
+  credential?: ResolvedCredential;
+  errors: AgentOSError[];
+  warnings: AgentOSError[];
+  reference: CredentialReferenceSummary;
+}
+
+export interface CredentialValidationResult {
+  valid: boolean;
+  errors: AgentOSError[];
+  warnings: AgentOSError[];
+  reference?: CredentialReferenceSummary;
+}
+
+export interface CredentialResolver {
+  resolve(
+    reference: CredentialReference
+  ): CredentialResolutionResult | Promise<CredentialResolutionResult>;
+  validateReference(reference: CredentialReference): CredentialValidationResult;
+  inspectReference(reference: CredentialReference): CredentialReferenceSummary;
+}
+
 export enum ModelFinishReason {
   Stop = "stop",
   Length = "length",

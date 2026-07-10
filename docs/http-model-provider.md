@@ -45,6 +45,10 @@ const transport = new HTTPModelProviderBase({
   defaultHeaders: {},
   allowLocalhost: false,
   userAgent: "AgentOS/0.1",
+  credential: {
+    type: "environment",
+    name: "MODEL_API_KEY",
+  },
 });
 ```
 
@@ -87,6 +91,28 @@ const provider = createOpenAICompatibleProvider({
 The current adapter maps to `/v1/chat/completions` and expects a response with a
 `choices[0].message.content` string.
 
+## Credentials
+
+`HTTPModelProviderBase` accepts a `CredentialReference` and `CredentialResolver`.
+The credential is resolved only at request time and is applied as an
+authorization header by default.
+
+```ts
+import { CredentialResolver, CredentialType, HTTPModelProviderBase } from "@agentos/sdk";
+
+const transport = new HTTPModelProviderBase({
+  baseUrl: "https://api.example.com",
+  credential: {
+    type: CredentialType.Environment,
+    name: "MODEL_API_KEY",
+  },
+  credentialResolver: new CredentialResolver(),
+});
+```
+
+The public transport config exposes only a redacted credential reference. The
+resolved secret is not stored in provider metadata or summaries.
+
 ## Security Model
 
 The transport is intentionally conservative:
@@ -105,7 +131,7 @@ the concrete provider requirements are clear.
 
 ## Current Limitations
 
-- no built-in API key handling
+- no OAuth or API-key management helper
 - no streaming
 - no retries
 - no request batching

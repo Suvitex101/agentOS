@@ -1,9 +1,19 @@
-import { defineModelProvider } from "@agentos/core";
 import {
+  CredentialResolver,
+  defineModelProvider,
+  redactCredentialReference,
+  redactMetadata,
+  redactSecretValue,
+} from "@agentos/core";
+import {
+  CredentialType,
   ModelFinishReason,
   ModelProviderCapability,
   type AgentOSError,
   type AgentOSMetadata,
+  type CredentialReference,
+  type CredentialReferenceSummary,
+  type CredentialResolver as CredentialResolverContract,
   type ModelGenerationRequest,
   type ModelGenerationResponse,
   type ModelUsage,
@@ -23,6 +33,10 @@ export interface HTTPModelProviderTransportConfig {
   defaultHeaders?: Record<string, string>;
   allowLocalhost?: boolean;
   userAgent?: string;
+  credential?: CredentialReference;
+  credentialResolver?: CredentialResolverContract;
+  credentialHeaderName?: string;
+  credentialPrefix?: string;
   fetchImplementation?: HTTPModelProviderFetch;
 }
 
@@ -81,10 +95,19 @@ const SENSITIVE_HEADER_NAMES = new Set([
 
 export class HTTPModelProviderBase {
   readonly config: Readonly<
-    Required<Omit<HTTPModelProviderTransportConfig, "fetchImplementation">>
+    Required<
+      Omit<
+        HTTPModelProviderTransportConfig,
+        "credential" | "credentialResolver" | "fetchImplementation"
+      >
+    > & {
+      credential?: CredentialReferenceSummary;
+    }
   >;
 
   private readonly fetchImplementation: HTTPModelProviderFetch;
+  private readonly credentialReference?: CredentialReference;
+  private readonly credentialResolver: CredentialResolverContract;
 
   constructor(config: HTTPModelProviderTransportConfig) {
     const baseUrl = new URL(config.baseUrl);
@@ -103,8 +126,13 @@ export class HTTPModelProviderBase {
       defaultHeaders: Object.freeze({ ...(config.defaultHeaders ?? {}) }) as Record<string, string>,
       allowLocalhost: config.allowLocalhost ?? false,
       userAgent: config.userAgent ?? "AgentOS/0.1",
+      credential: redactCredentialReference(config.credential),
+      credentialHeaderName: config.credentialHeaderName ?? "authorization",
+      credentialPrefix: config.credentialPrefix ?? "Bearer ",
     });
     this.fetchImplementation = config.fetchImplementation ?? fetch;
+    this.credentialReference = config.credential;
+    this.credentialResolver = config.credentialResolver ?? new CredentialResolver();
 
     if (this.config.timeoutMs <= 0) {
       throw createTransportError(
@@ -128,7 +156,7 @@ export class HTTPModelProviderBase {
     const startedAt = Date.now();
     const built = adapter.buildRequest(request);
     const url = this.resolveRequestUrl(built.path);
-    const headers = this.createHeaders(built.headers);
+    const headers = await this.createHeaders(built.headers);
     const body = built.body === undefined ? undefined : JSON.stringify(built.body);
     const controller = new AbortController();
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -256,13 +284,51 @@ export class HTTPModelProviderBase {
     return url;
   }
 
-  private createHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  private async createHeaders(
+    headers: Record<string, string> | undefined
+  ): Promise<Record<string, string>> {
+    const credentialHeaders = await this.createCredentialHeaders();
+
     return {
       ...this.config.defaultHeaders,
       "content-type": "application/json",
       accept: "application/json",
       "user-agent": this.config.userAgent,
       ...(headers ?? {}),
+      ...credentialHeaders,
+    };
+  }
+
+  private async createCredentialHeaders(): Promise<Record<string, string>> {
+    if (!this.credentialReference) {
+      return {};
+    }
+
+    const result = await this.credentialResolver.resolve(this.credentialReference);
+
+    if (!result.success || !result.credential) {
+      throw createTransportError(
+        "http_model_provider_credential_resolution_failed",
+        "Remote model provider credential could not be resolved.",
+        {
+          errors: result.errors.map((error) => ({
+            code: error.code,
+            message: error.message,
+            metadata: redactMetadata(error.metadata),
+          })),
+          reference: result.reference,
+        }
+      );
+    }
+
+    const prefix =
+      this.credentialReference.type === CredentialType.Static ||
+      this.credentialReference.type === CredentialType.Environment
+        ? this.config.credentialPrefix
+        : "";
+
+    return {
+      [this.config.credentialHeaderName]: `${prefix}${result.credential.value}`,
     };
   }
 }
@@ -493,12 +559,6 @@ function redactHeaders(headers: Record<string, string>): Record<string, string> 
   return output;
 }
 
-function redactSecretValue(value: string): string {
-  return value
-    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
-    .replace(/\bsk-[A-Za-z0-9_-]+\b/g, "sk-[redacted]");
-}
-
 function normalizeTransportError(error: unknown): AgentOSError {
   if (isAgentOSError(error)) {
     return {
@@ -534,26 +594,6 @@ function createTransportError(
     recoverable: true,
     metadata: redactMetadata(metadata),
   };
-}
-
-function redactMetadata(metadata: AgentOSMetadata | undefined): AgentOSMetadata | undefined {
-  if (!metadata) {
-    return undefined;
-  }
-
-  const output: AgentOSMetadata = {};
-
-  for (const [key, value] of Object.entries(metadata)) {
-    if (typeof value === "string") {
-      output[key] = redactSecretValue(value);
-    } else if (value && typeof value === "object" && !Array.isArray(value)) {
-      output[key] = redactMetadata(value as AgentOSMetadata);
-    } else {
-      output[key] = value;
-    }
-  }
-
-  return output;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
