@@ -89,6 +89,24 @@ export enum PlanStepType {
   Respond = "respond",
 }
 
+export const PlanSchemaVersion = {
+  V1: "v1",
+} as const;
+
+export type PlanSchemaVersion =
+  (typeof PlanSchemaVersion)[keyof typeof PlanSchemaVersion] | (string & {});
+
+export type PlanValidationIssueSeverity = "error" | "warning";
+
+export interface PlanValidationIssue {
+  code: string;
+  message: string;
+  severity: PlanValidationIssueSeverity;
+  path: string;
+  offendingValue?: unknown;
+  metadata?: AgentOSMetadata;
+}
+
 export enum ToolCategory {
   Communication = "communication",
   Research = "research",
@@ -688,6 +706,7 @@ export interface ModelAssistedPlannerOptions extends PlannerOptions {
   systemPrompt?: string;
   fallback?: ModelAssistedPlannerFallback;
   includeRawResponse?: boolean;
+  repair?: boolean;
   metadata?: AgentOSMetadata;
 }
 
@@ -695,6 +714,7 @@ export interface PlanValidationResult {
   valid: boolean;
   errors: AgentOSError[];
   warnings: string[];
+  issues?: PlanValidationIssue[];
   metadata?: AgentOSMetadata;
 }
 

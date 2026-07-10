@@ -32,6 +32,7 @@
     "example:openai-compatible-provider": "tsx examples/openai-compatible-provider/index.ts",
     "example:credential-sdk": "tsx examples/credential-sdk/index.ts",
     "example:live-model-agent": "tsx examples/live-model-agent/index.ts",
+    "example:plan-validation": "tsx examples/plan-validation/index.ts",
     "smoke:live-model": "tsx examples/live-model-agent/index.ts --live"
   },
   "devDependencies": {

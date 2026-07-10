@@ -233,11 +233,15 @@ Provider output is treated as untrusted input:
 - provider-generated tool outputs are rejected
 - registry mutations are rejected
 - AgentOS creates all plan ids, step ids, timestamps, statuses, and task links
+- generated plans pass through `PlanValidator` before execution
+- one repair attempt may be made when validation fails
 
 If provider planning fails, `fallback: "rule-based"` delegates to
 `RuleBasedPlanner`. `fallback: "fail"` throws a typed planning error.
 
 `RuleBasedPlanner` remains fully independent and deterministic.
+
+See [Plan Validation](plan-validation.md).
 
 ## Current Limitations
 

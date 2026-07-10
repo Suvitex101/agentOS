@@ -67,6 +67,8 @@ export type {
 } from "./model-provider-definition";
 export { ModelProviderResolver } from "./model-provider-resolver";
 export type { ModelProviderResolverOptions } from "./model-provider-resolver";
+export { PlanValidator, createPlanValidator } from "./plan-validator";
+export type { PlanValidatorOptions } from "./plan-validator";
 export { SecurityPolicyEngine } from "./security-policy-engine";
 export {
   CredentialResolver,

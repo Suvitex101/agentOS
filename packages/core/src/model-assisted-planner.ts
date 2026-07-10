@@ -1,6 +1,7 @@
 import {
   ModelFinishReason,
   ModelProviderCapability,
+  PlanSchemaVersion,
   PlanStatus,
   PlanStepStatus,
   PlanStepType,
@@ -16,10 +17,12 @@ import {
   type Planner,
   type PlannerProviderRequest,
   type PlanStep,
+  type PlanValidationIssue,
   type PlanValidationResult,
   type Task,
 } from "@agentos/types";
 import { ModelProviderResolver } from "./model-provider-resolver";
+import { PlanValidator } from "./plan-validator";
 import { RuleBasedPlanner } from "./rule-based-planner";
 
 export interface ModelAssistedPlannerConstructorOptions {
@@ -54,6 +57,7 @@ interface NormalizedProviderPlan {
 }
 
 const DEFAULT_MAX_STEPS = 8;
+const PLAN_SCHEMA_VERSION = PlanSchemaVersion.V1;
 const REQUIRED_CAPABILITIES = [ModelProviderCapability.TextGeneration];
 const PREFERRED_CAPABILITIES = [
   ModelProviderCapability.Reasoning,
@@ -115,6 +119,7 @@ export class ModelAssistedPlanner implements Planner {
     this.defaultOptions = Object.freeze({
       fallback: "rule-based",
       maxSteps: DEFAULT_MAX_STEPS,
+      repair: true,
       ...options.options,
     });
   }
@@ -139,7 +144,7 @@ export class ModelAssistedPlanner implements Planner {
   }
 
   validatePlan(plan: Plan): PlanValidationResult | Promise<PlanValidationResult> {
-    return this.fallbackPlanner.validatePlan(plan);
+    return new PlanValidator().validate(plan);
   }
 
   estimateComplexity(task: Task): PlanComplexityEstimate | Promise<PlanComplexityEstimate> {
@@ -172,31 +177,96 @@ export class ModelAssistedPlanner implements Planner {
         },
       });
       const providerDurationMs = response.durationMs ?? Date.now() - generationStartedAt;
-      const normalized = parseProviderPlan(response, options.maxSteps ?? DEFAULT_MAX_STEPS);
-      const plan = createPlanFromProviderSteps({
-        planner: this,
+      const initial = await this.buildValidatedProviderPlan({
         agent,
         task,
         provider,
         response,
         providerDurationMs,
-        normalized,
         previousPlan,
-        includeRawResponse: options.includeRawResponse === true,
+        options,
+        repairMetadata: {
+          repairAttempted: false,
+          repairSucceeded: false,
+        },
       });
-      const validation = await this.validatePlan(plan);
 
-      if (!validation.valid) {
+      if (initial.success) {
+        return initial.plan;
+      }
+
+      if (options.repair !== false) {
+        const repairStartedAt = Date.now();
+        const repairResponse = await provider.generate({
+          prompt: buildRepairPrompt({
+            task,
+            originalResponse: response.text,
+            issues: initial.issues,
+            error: initial.error,
+            maxSteps: options.maxSteps ?? DEFAULT_MAX_STEPS,
+          }),
+          systemPrompt: repairSystemPrompt(),
+          temperature: 0,
+          maxTokens: options.maxTokens,
+          metadata: {
+            plannerId: this.id,
+            taskId: task.id,
+            repairAttempt: 1,
+            ...options.metadata,
+          },
+        });
+        const repairDurationMs = Date.now() - repairStartedAt;
+        const repaired = await this.buildValidatedProviderPlan({
+          agent,
+          task,
+          provider,
+          response: repairResponse,
+          providerDurationMs: repairResponse.durationMs ?? repairDurationMs,
+          previousPlan,
+          options,
+          repairMetadata: {
+            repairAttempted: true,
+            repairDurationMs,
+            repairSucceeded: false,
+          },
+        });
+
+        if (repaired.success) {
+          return {
+            ...repaired.plan,
+            metadata: {
+              ...repaired.plan.metadata,
+              repairAttempted: true,
+              repairSucceeded: true,
+              repairDurationMs,
+            },
+          };
+        }
+
         throw createPlannerError(
-          "model_planner_invalid_plan_structure",
-          "Model-assisted planner produced an invalid AgentOS plan.",
+          "model_planner_repair_failed",
+          "Model-assisted planner repair attempt did not produce a valid AgentOS plan.",
           {
-            validation,
+            originalError: initial.error,
+            originalIssues: initial.issues,
+            repairError: repaired.error,
+            repairIssues: repaired.issues,
+            repairAttempted: true,
+            repairDurationMs,
           }
         );
       }
 
-      return plan;
+      throw (
+        initial.error ??
+        createPlannerError(
+          "model_planner_invalid_plan_structure",
+          "Model-generated plan is invalid.",
+          {
+            issues: initial.issues,
+          }
+        )
+      );
     } catch (error) {
       if (options.fallback === "rule-based") {
         return this.createFallbackPlan(agent, task, context, options, previousPlan, error);
@@ -264,6 +334,83 @@ export class ModelAssistedPlanner implements Planner {
     );
   }
 
+  private async buildValidatedProviderPlan(input: {
+    agent: Agent;
+    task: Task;
+    provider: ModelProvider;
+    response: ModelGenerationResponse;
+    providerDurationMs: number;
+    previousPlan?: Plan;
+    options: ModelAssistedPlannerOptions;
+    repairMetadata: {
+      repairAttempted: boolean;
+      repairDurationMs?: number;
+      repairSucceeded: boolean;
+    };
+  }): Promise<
+    | {
+        success: true;
+        plan: Plan;
+      }
+    | {
+        success: false;
+        error?: AgentOSError;
+        issues: PlanValidationIssue[];
+      }
+  > {
+    try {
+      const normalized = parseProviderPlan(
+        input.response,
+        input.options.maxSteps ?? DEFAULT_MAX_STEPS
+      );
+      const plan = createPlanFromProviderSteps({
+        planner: this,
+        agent: input.agent,
+        task: input.task,
+        provider: input.provider,
+        response: input.response,
+        providerDurationMs: input.providerDurationMs,
+        normalized,
+        previousPlan: input.previousPlan,
+        includeRawResponse: input.options.includeRawResponse === true,
+        repairMetadata: input.repairMetadata,
+      });
+      const validation = await this.validatePlan(plan);
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: createPlannerError(
+            "model_planner_invalid_plan_structure",
+            "Model-assisted planner produced an invalid AgentOS plan.",
+            {
+              validation,
+            }
+          ),
+          issues: validation.issues ?? [],
+        };
+      }
+
+      return {
+        success: true,
+        plan: {
+          ...plan,
+          metadata: {
+            ...plan.metadata,
+            validationDurationMs: validation.metadata?.validationDurationMs,
+            validationIssueCount: validation.issues?.length ?? 0,
+          },
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: normalizePlannerError(error),
+        issues: errorToIssues(error),
+      };
+    }
+  }
+
   private createFallbackPlan(
     agent: Agent,
     task: Task,
@@ -290,6 +437,11 @@ export class ModelAssistedPlanner implements Planner {
         ...fallback.metadata,
         fallbackUsed: true,
         fallbackReason: normalizePlannerError(error).code,
+        repairAttempted:
+          isAgentOSError(error) && typeof error.metadata?.repairAttempted === "boolean"
+            ? error.metadata.repairAttempted
+            : undefined,
+        repairSucceeded: false,
         modelAssistedPlanner: this.name,
         generatedAt: fallback.metadata?.generatedAt ?? new Date(),
       },
@@ -526,6 +678,11 @@ function createPlanFromProviderSteps(input: {
   normalized: NormalizedProviderPlan;
   previousPlan?: Plan;
   includeRawResponse: boolean;
+  repairMetadata: {
+    repairAttempted: boolean;
+    repairDurationMs?: number;
+    repairSucceeded: boolean;
+  };
 }): Plan {
   const createdAt = new Date();
   const planId = input.previousPlan
@@ -542,6 +699,7 @@ function createPlanFromProviderSteps(input: {
       createPlanStep(planId, step, index, input.provider.id)
     ),
     metadata: {
+      schemaVersion: PLAN_SCHEMA_VERSION,
       plannerName: input.planner.name,
       plannerStrategy: input.planner.strategy.type,
       providerId: input.provider.id,
@@ -550,6 +708,9 @@ function createPlanFromProviderSteps(input: {
       providerDurationMs: input.providerDurationMs,
       finishReason: input.response.finishReason ?? ModelFinishReason.Unknown,
       fallbackUsed: false,
+      repairAttempted: input.repairMetadata.repairAttempted,
+      repairSucceeded: input.repairMetadata.repairSucceeded,
+      repairDurationMs: input.repairMetadata.repairDurationMs,
       generatedAt: createdAt,
       responseParsingStatus: input.normalized.parsingStatus,
       previousPlanId: input.previousPlan?.id,
@@ -579,6 +740,48 @@ function createPlanStep(
       generatedByProvider: providerId,
     },
   };
+}
+
+function buildRepairPrompt(input: {
+  task: Task;
+  originalResponse: string;
+  issues: PlanValidationIssue[];
+  error?: AgentOSError;
+  maxSteps: number;
+}): string {
+  return [
+    "Repair the AgentOS plan JSON.",
+    "Return corrected JSON only. Do not include explanations.",
+    "Preserve the user's intent.",
+    "Do not include ids, task ids, statuses, timestamps, metadata mutations, tool outputs, registry mutations, memory mutations, or executable fields.",
+    "Use only a top-level object with a steps array.",
+    "Each step must include description and may include type, requiredTool, requiredCapability, and input.",
+    `Maximum steps: ${input.maxSteps}.`,
+    JSON.stringify({
+      taskObjective: stringifyTaskInput(input.task.input),
+      validationError: input.error
+        ? {
+            code: input.error.code,
+            message: input.error.message,
+          }
+        : undefined,
+      validationIssues: input.issues.map((issue) => ({
+        code: issue.code,
+        message: issue.message,
+        path: issue.path,
+      })),
+      originalResponse: input.originalResponse.slice(0, 12000),
+    }),
+  ].join("\n");
+}
+
+function repairSystemPrompt(): string {
+  return [
+    "You repair invalid AgentOS plan JSON.",
+    "Return JSON only.",
+    "Never include privileged fields.",
+    "Never include explanations.",
+  ].join(" ");
 }
 
 function normalizeStepType(type: unknown): PlanStepType {
@@ -638,6 +841,20 @@ function normalizePlannerError(error: unknown): AgentOSError {
     "model_planner_generation_failed",
     error instanceof Error ? error.message : "Model-assisted planning failed."
   );
+}
+
+function errorToIssues(error: unknown): PlanValidationIssue[] {
+  const normalized = normalizePlannerError(error);
+
+  return [
+    {
+      code: normalized.code,
+      message: normalized.message,
+      severity: "error",
+      path: "$",
+      offendingValue: normalized.metadata,
+    },
+  ];
 }
 
 function isAgentOSError(error: unknown): error is AgentOSError {

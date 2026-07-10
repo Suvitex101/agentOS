@@ -15,9 +15,12 @@ function createProvider(
     id?: string;
     capabilities?: string[];
     text?: string;
+    repairText?: string;
     throwError?: boolean;
   } = {}
 ): ModelProvider {
+  let calls = 0;
+
   return defineModelProvider({
     id: input.id ?? "structured-provider",
     name: "Structured Provider",
@@ -28,8 +31,19 @@ function createProvider(
       ModelProviderCapability.StructuredOutput,
     ],
     generate() {
+      calls += 1;
+
       if (input.throwError) {
         throw new Error("provider failed");
+      }
+
+      if (calls > 1 && input.repairText !== undefined) {
+        return {
+          text: input.repairText,
+          model: "deterministic-test-model",
+          finishReason: "stop",
+          durationMs: 4,
+        };
       }
 
       return {
@@ -57,6 +71,9 @@ function createProvider(
         model: "deterministic-test-model",
         finishReason: "stop",
         durationMs: 4,
+        metadata: {
+          calls,
+        },
       };
     },
   });
@@ -95,6 +112,7 @@ describe("ModelAssistedPlanner", () => {
     });
     expect(plan.createdAt).toBeInstanceOf(Date);
     expect(plan.metadata).toMatchObject({
+      schemaVersion: "v1",
       plannerName: "ModelAssistedPlanner",
       plannerStrategy: "hybrid",
       providerId: "structured-provider",
@@ -103,6 +121,8 @@ describe("ModelAssistedPlanner", () => {
       providerDurationMs: 4,
       finishReason: "stop",
       fallbackUsed: false,
+      repairAttempted: false,
+      repairSucceeded: false,
       responseParsingStatus: "parsed",
     });
     expect(plan.metadata?.rawProviderResponse).toBeUndefined();
@@ -226,7 +246,7 @@ describe("ModelAssistedPlanner", () => {
     );
 
     expect(plan.metadata?.fallbackUsed).toBe(true);
-    expect(plan.metadata?.fallbackReason).toBe("model_planner_invalid_json");
+    expect(plan.metadata?.fallbackReason).toBe("model_planner_repair_failed");
     expect(plan.metadata?.ruleMatched).toBe("analysis");
   });
 
@@ -245,7 +265,61 @@ describe("ModelAssistedPlanner", () => {
     await expect(
       planner.plan(agentDefinition, task, createExecutionContext(agentDefinition, task))
     ).rejects.toMatchObject({
-      code: "model_planner_invalid_json",
+      code: "model_planner_repair_failed",
+    });
+  });
+
+  it("repairs an invalid provider response once", async () => {
+    const agentDefinition = createTestAgent();
+    const task = createTestTask("Plan research");
+    const planner = createPlanner(
+      createProvider({
+        text: "not json",
+        repairText: JSON.stringify({
+          steps: [
+            {
+              description: "Gather repaired information",
+              type: "research",
+              requiredCapability: "research",
+            },
+          ],
+        }),
+      }),
+      {
+        fallback: "fail",
+      }
+    );
+    const plan = await planner.plan(
+      agentDefinition,
+      task,
+      createExecutionContext(agentDefinition, task)
+    );
+
+    expect(plan.steps).toHaveLength(1);
+    expect(plan.steps[0]?.description).toBe("Gather repaired information");
+    expect(plan.metadata).toMatchObject({
+      repairAttempted: true,
+      repairSucceeded: true,
+    });
+  });
+
+  it("does not repair recursively", async () => {
+    const agentDefinition = createTestAgent();
+    const task = createTestTask("Plan research");
+    const planner = createPlanner(
+      createProvider({
+        text: "not json",
+        repairText: "still not json",
+      }),
+      {
+        fallback: "fail",
+      }
+    );
+
+    await expect(
+      planner.plan(agentDefinition, task, createExecutionContext(agentDefinition, task))
+    ).rejects.toMatchObject({
+      code: "model_planner_repair_failed",
     });
   });
 
@@ -280,7 +354,12 @@ describe("ModelAssistedPlanner", () => {
       await expect(
         planner.plan(agentDefinition, task, createExecutionContext(agentDefinition, task))
       ).rejects.toMatchObject({
-        code,
+        code: "model_planner_repair_failed",
+        metadata: {
+          originalError: {
+            code,
+          },
+        },
       });
     }
   });
@@ -307,7 +386,12 @@ describe("ModelAssistedPlanner", () => {
     await expect(
       planner.plan(agentDefinition, task, createExecutionContext(agentDefinition, task))
     ).rejects.toMatchObject({
-      code: "model_planner_privileged_fields",
+      code: "model_planner_repair_failed",
+      metadata: {
+        originalError: {
+          code: "model_planner_privileged_fields",
+        },
+      },
     });
   });
 

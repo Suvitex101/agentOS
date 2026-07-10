@@ -20,6 +20,8 @@ Planner
   ↓
 Plan
   ↓
+Plan Validation
+  ↓
 Execution Engine
   ↓
 Tool Resolver
@@ -36,7 +38,8 @@ flowchart TD
   Mission["Mission"] --> Task["Task"]
   Task --> Planner["Planner"]
   Planner --> Plan["Plan"]
-  Plan --> Engine["Execution Engine"]
+  Plan --> Validator["Plan Validation"]
+  Validator --> Engine["Execution Engine"]
   Engine --> Resolver["Tool Resolver"]
   Resolver --> Registry["AgentOS Registry"]
   Registry --> Tool["Tool"]
@@ -140,6 +143,19 @@ optional tool hints, input, output, error, and metadata.
 
 The current planner creates simple three-step plans for analysis, messaging,
 payment, or default tasks.
+
+## Plan Validation
+
+Model-generated plans are untrusted until validated. `ModelAssistedPlanner`
+builds a candidate plan from provider output, assigns AgentOS-owned ids and
+timestamps, stores `schemaVersion: "v1"` in metadata, and validates the plan
+with `PlanValidator`.
+
+Invalid plans are never sent to execution. If repair is enabled, the planner may
+make one provider repair request, validate the repaired output, then accept it,
+fall back, or fail according to planner configuration.
+
+See [docs/plan-validation.md](docs/plan-validation.md).
 
 ## Execution Engine
 

@@ -28,6 +28,7 @@ describe("runnable examples", () => {
     ["openai-compatible-provider", "../../examples/openai-compatible-provider/index.ts"],
     ["credential-sdk", "../../examples/credential-sdk/index.ts"],
     ["live-model-agent", "../../examples/live-model-agent/index.ts"],
+    ["plan-validation", "../../examples/plan-validation/index.ts"],
   ])("runs the %s example", async (_name, path) => {
     await expect(import(path)).resolves.toBeDefined();
     expect(process.exitCode).toBeUndefined();

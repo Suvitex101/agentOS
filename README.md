@@ -40,6 +40,8 @@ integration, database-backed memory, or dashboard functionality.
   references, resolution, and redaction.
 - [Live Model Testing](docs/live-model-testing.md): opt-in OpenAI-compatible
   workflow smoke testing.
+- [Plan Validation](docs/plan-validation.md): versioned validation and repair
+  for model-generated plans.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -179,6 +181,12 @@ Run the live-model workflow in deterministic mode:
 
 ```bash
 pnpm example:live-model-agent
+```
+
+Run the plan validation example:
+
+```bash
+pnpm example:plan-validation
 ```
 
 Run the opt-in live smoke test:
@@ -522,6 +530,17 @@ The default mode is deterministic and safe for CI. Live mode is opt-in through
 
 See [docs/live-model-testing.md](docs/live-model-testing.md).
 
+## Plan Validation
+
+Model-generated plans are treated as untrusted input. `PlanValidator` validates
+structure, schema version, size limits, safe identifiers, structured inputs, and
+security-sensitive fields before execution.
+
+`ModelAssistedPlanner` can make one repair request when validation fails. The
+repaired output is validated again, then accepted, sent to fallback, or failed.
+
+See [docs/plan-validation.md](docs/plan-validation.md).
+
 ## Provider Registry
 
 Model providers are first-class discoverable objects in the AgentOS registry.
@@ -617,11 +636,13 @@ pnpm example:model-assisted-planner
 pnpm example:openai-compatible-provider
 pnpm example:credential-sdk
 pnpm example:live-model-agent
+pnpm example:plan-validation
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,
 tool/connector authoring APIs, provider discovery, model-assisted planning, and
-the mocked HTTP model provider foundation, and credential resolution.
+the mocked HTTP model provider foundation, credential resolution, and plan
+validation.
 
 ## Testing
 
