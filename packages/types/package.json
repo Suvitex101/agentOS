@@ -1,13 +1,39 @@
 {
   "name": "@agentos/types",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.0-alpha.1",
+  "description": "Shared TypeScript domain types for AgentOS.",
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suvitex101/agaentOS.git",
+    "directory": "packages/types"
   },
+  "homepage": "https://github.com/Suvitex101/agaentOS#readme",
+  "bugs": {
+    "url": "https://github.com/Suvitex101/agaentOS/issues"
+  },
+  "keywords": [
+    "agentos",
+    "ai-agents",
+    "typescript",
+    "agent-infrastructure"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }

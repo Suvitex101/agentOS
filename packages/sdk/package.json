@@ -1,20 +1,47 @@
 {
   "name": "@agentos/sdk",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.0-alpha.1",
+  "description": "Primary public SDK entry point for AgentOS.",
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suvitex101/agaentOS.git",
+    "directory": "packages/sdk"
   },
+  "homepage": "https://github.com/Suvitex101/agaentOS#readme",
+  "bugs": {
+    "url": "https://github.com/Suvitex101/agaentOS/issues"
+  },
+  "keywords": [
+    "agentos",
+    "sdk",
+    "ai-agents",
+    "agent-infrastructure",
+    "typescript"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
-    "@agentos/connectors": "workspace:*",
-    "@agentos/core": "workspace:*",
-    "@agentos/memory": "workspace:*",
-    "@agentos/providers": "workspace:*",
-    "@agentos/types": "workspace:*"
+    "@agentos/connectors": "workspace:^",
+    "@agentos/core": "workspace:^",
+    "@agentos/memory": "workspace:^",
+    "@agentos/providers": "workspace:^",
+    "@agentos/types": "workspace:^"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

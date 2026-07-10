@@ -1,13 +1,14 @@
 {
   "name": "@agentos/tools",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
+  "description": "Internal placeholder package for future AgentOS tool helpers.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }

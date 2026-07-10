@@ -39,8 +39,14 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Evaluate planner fixtures
+        run: pnpm test:evaluation
+
       - name: Build
         run: pnpm build
+
+      - name: Verify package install
+        run: pnpm test:package-install
 
       - name: Verify examples
         run: pnpm test:examples

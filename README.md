@@ -44,6 +44,11 @@ integration, database-backed memory, or dashboard functionality.
   for model-generated plans.
 - [Planner Prompts](docs/planner-prompts.md): versioned prompt assets for
   model-assisted planning.
+- [Release Package Strategy](docs/release/package-strategy.md): alpha package
+  decisions and publishability audit.
+- [Public API Surface](docs/release/public-api-surface.md): intended
+  `@agentos/sdk` alpha exports.
+- [Changelog](CHANGELOG.md): release history and alpha candidate notes.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -665,10 +670,35 @@ pnpm test
 pnpm test:unit
 pnpm test:integration
 pnpm test:examples
+pnpm test:evaluation
 pnpm test:watch
 ```
 
 Test helpers live in `tests/helpers/`.
+
+`pnpm test:evaluation` runs deterministic planner evaluation fixtures. It
+checks prompt paths, validation outcomes, repair/fallback behavior, schema
+metadata, and basic plan characteristics. It does not perform subjective
+natural-language scoring.
+
+## Release Readiness
+
+Release checks are safe and do not publish packages.
+
+```bash
+pnpm release:package-boundaries
+pnpm pack:packages
+pnpm test:package-install
+pnpm release:check
+```
+
+`pnpm test:package-install` builds the publishable packages, packs local
+tarballs, installs them into a temporary project outside the monorepo, imports
+from `@agentos/sdk`, and runs a deterministic agent workflow.
+
+See [docs/release/package-strategy.md](docs/release/package-strategy.md),
+[docs/release/public-api-surface.md](docs/release/public-api-surface.md), and
+[docs/release/release-checklist.md](docs/release/release-checklist.md).
 
 ## CI
 
@@ -681,7 +711,9 @@ CI validates:
 - `pnpm typecheck`
 - `pnpm lint`
 - `pnpm test`
+- `pnpm test:evaluation`
 - `pnpm build`
+- `pnpm test:package-install`
 - `pnpm test:examples`
 
 ## Contributing

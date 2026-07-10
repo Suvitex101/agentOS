@@ -1,19 +1,45 @@
 {
   "name": "@agentos/providers",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.0-alpha.1",
+  "description": "Model provider foundation and OpenAI-compatible adapter for AgentOS.",
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suvitex101/agaentOS.git",
+    "directory": "packages/providers"
   },
+  "homepage": "https://github.com/Suvitex101/agaentOS#readme",
+  "bugs": {
+    "url": "https://github.com/Suvitex101/agaentOS/issues"
+  },
+  "keywords": [
+    "agentos",
+    "model-provider",
+    "reasoning",
+    "typescript"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentos/core": "workspace:*",
-    "@agentos/types": "workspace:*"
+    "@agentos/core": "workspace:^",
+    "@agentos/types": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.10.7"
