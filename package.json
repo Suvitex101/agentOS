@@ -33,6 +33,7 @@
     "example:credential-sdk": "tsx examples/credential-sdk/index.ts",
     "example:live-model-agent": "tsx examples/live-model-agent/index.ts",
     "example:plan-validation": "tsx examples/plan-validation/index.ts",
+    "example:planner-prompts": "tsx examples/planner-prompts/index.ts",
     "smoke:live-model": "tsx examples/live-model-agent/index.ts --live"
   },
   "devDependencies": {

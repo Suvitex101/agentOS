@@ -23,6 +23,7 @@ import {
 } from "@agentos/types";
 import { ModelProviderResolver } from "./model-provider-resolver";
 import { PlanValidator } from "./plan-validator";
+import { buildPlanningPrompt, buildRepairPrompt } from "./planner-prompts";
 import { RuleBasedPlanner } from "./rule-based-planner";
 
 export interface ModelAssistedPlannerConstructorOptions {
@@ -162,17 +163,25 @@ export class ModelAssistedPlanner implements Planner {
       validatePlannerOptions(options);
 
       const provider = this.resolveProvider(options.provider);
-      const prompt = buildProviderPrompt(agent, task, context, previousPlan, options.maxSteps);
+      const promptBuild = buildPlanningPrompt({
+        agent,
+        task,
+        provider,
+        previousPlan,
+        maxSteps: options.maxSteps ?? DEFAULT_MAX_STEPS,
+      });
       const generationStartedAt = Date.now();
       const response = await provider.generate({
-        prompt,
-        systemPrompt: options.systemPrompt ?? defaultSystemPrompt(),
+        prompt: promptBuild.prompt,
+        systemPrompt: options.systemPrompt ?? promptBuild.systemPrompt,
         temperature: options.temperature,
         maxTokens: options.maxTokens,
         metadata: {
           plannerId: this.id,
           taskId: task.id,
           previousPlanId: previousPlan?.id,
+          promptVersion: promptBuild.metadata.promptVersion,
+          providerCapabilityPath: promptBuild.metadata.providerCapabilityPath,
           ...options.metadata,
         },
       });
@@ -185,6 +194,8 @@ export class ModelAssistedPlanner implements Planner {
         providerDurationMs,
         previousPlan,
         options,
+        promptMetadata: promptBuild.metadata,
+        debugPrompt: options.debugPrompt === true ? promptBuild.prompt : undefined,
         repairMetadata: {
           repairAttempted: false,
           repairSucceeded: false,
@@ -197,21 +208,25 @@ export class ModelAssistedPlanner implements Planner {
 
       if (options.repair !== false) {
         const repairStartedAt = Date.now();
+        const repairPromptBuild = buildRepairPrompt({
+          task,
+          provider,
+          originalResponse: response.text,
+          issues: initial.issues,
+          error: initial.error,
+          maxSteps: options.maxSteps ?? DEFAULT_MAX_STEPS,
+        });
         const repairResponse = await provider.generate({
-          prompt: buildRepairPrompt({
-            task,
-            originalResponse: response.text,
-            issues: initial.issues,
-            error: initial.error,
-            maxSteps: options.maxSteps ?? DEFAULT_MAX_STEPS,
-          }),
-          systemPrompt: repairSystemPrompt(),
+          prompt: repairPromptBuild.prompt,
+          systemPrompt: repairPromptBuild.systemPrompt,
           temperature: 0,
           maxTokens: options.maxTokens,
           metadata: {
             plannerId: this.id,
             taskId: task.id,
             repairAttempt: 1,
+            promptVersion: repairPromptBuild.metadata.promptVersion,
+            providerCapabilityPath: repairPromptBuild.metadata.providerCapabilityPath,
             ...options.metadata,
           },
         });
@@ -224,6 +239,8 @@ export class ModelAssistedPlanner implements Planner {
           providerDurationMs: repairResponse.durationMs ?? repairDurationMs,
           previousPlan,
           options,
+          promptMetadata: repairPromptBuild.metadata,
+          debugPrompt: options.debugPrompt === true ? repairPromptBuild.prompt : undefined,
           repairMetadata: {
             repairAttempted: true,
             repairDurationMs,
@@ -342,6 +359,13 @@ export class ModelAssistedPlanner implements Planner {
     providerDurationMs: number;
     previousPlan?: Plan;
     options: ModelAssistedPlannerOptions;
+    promptMetadata: {
+      promptVersion: string;
+      promptSize: number;
+      providerCapabilityPath: string;
+      schemaVersion: string;
+    };
+    debugPrompt?: string;
     repairMetadata: {
       repairAttempted: boolean;
       repairDurationMs?: number;
@@ -373,6 +397,8 @@ export class ModelAssistedPlanner implements Planner {
         normalized,
         previousPlan: input.previousPlan,
         includeRawResponse: input.options.includeRawResponse === true,
+        promptMetadata: input.promptMetadata,
+        debugPrompt: input.debugPrompt,
         repairMetadata: input.repairMetadata,
       });
       const validation = await this.validatePlan(plan);
@@ -399,6 +425,9 @@ export class ModelAssistedPlanner implements Planner {
             ...plan.metadata,
             validationDurationMs: validation.metadata?.validationDurationMs,
             validationIssueCount: validation.issues?.length ?? 0,
+            firstPassValidationSucceeded: !input.repairMetadata.repairAttempted,
+            repairRequired: input.repairMetadata.repairAttempted,
+            fallbackRequired: false,
           },
         },
       };
@@ -442,6 +471,7 @@ export class ModelAssistedPlanner implements Planner {
             ? error.metadata.repairAttempted
             : undefined,
         repairSucceeded: false,
+        fallbackRequired: true,
         modelAssistedPlanner: this.name,
         generatedAt: fallback.metadata?.generatedAt ?? new Date(),
       },
@@ -518,57 +548,6 @@ function validatePlannerOptions(options: ModelAssistedPlannerOptions): void {
   if (options.maxSteps !== undefined && (options.maxSteps <= 0 || options.maxSteps > 20)) {
     throw createPlannerError("model_planner_invalid_options", "maxSteps must be between 1 and 20.");
   }
-}
-
-function buildProviderPrompt(
-  agent: Agent,
-  task: Task,
-  context: ExecutionContext,
-  previousPlan: Plan | undefined,
-  maxSteps: number | undefined
-): string {
-  const payload = {
-    taskObjective: stringifyTaskInput(task.input),
-    agentCapabilities: agent.capabilities.map((capability) => capability.name),
-    memoryCount: context.memory.length,
-    resourceCount: context.resources?.length ?? 0,
-    maxSteps: maxSteps ?? DEFAULT_MAX_STEPS,
-    previousPlan: previousPlan
-      ? {
-          id: previousPlan.id,
-          steps: previousPlan.steps.map((step) => ({
-            order: step.order,
-            description: step.description,
-            status: step.status,
-          })),
-          reasonForReplanning: "Create a safer updated plan for the same task.",
-        }
-      : undefined,
-    expectedSchema: {
-      steps: [
-        {
-          description: "Gather relevant information",
-          type: "research",
-          requiredCapability: "search",
-        },
-      ],
-    },
-  };
-
-  return [
-    "Create a minimal JSON plan for this AgentOS task.",
-    "Return only JSON. Do not include ids, task ids, statuses, timestamps, tool outputs, or registry mutations.",
-    JSON.stringify(payload),
-  ].join("\n");
-}
-
-function defaultSystemPrompt(): string {
-  return [
-    "You are a planning component inside AgentOS.",
-    "Return only a JSON object with a steps array.",
-    "Each step must include a short description and may include type, requiredTool, requiredCapability, or input.",
-    "Do not execute tools. Do not return tool results. Do not mutate registries.",
-  ].join(" ");
 }
 
 function parseProviderPlan(
@@ -678,6 +657,13 @@ function createPlanFromProviderSteps(input: {
   normalized: NormalizedProviderPlan;
   previousPlan?: Plan;
   includeRawResponse: boolean;
+  promptMetadata: {
+    promptVersion: string;
+    promptSize: number;
+    providerCapabilityPath: string;
+    schemaVersion: string;
+  };
+  debugPrompt?: string;
   repairMetadata: {
     repairAttempted: boolean;
     repairDurationMs?: number;
@@ -713,6 +699,10 @@ function createPlanFromProviderSteps(input: {
       repairDurationMs: input.repairMetadata.repairDurationMs,
       generatedAt: createdAt,
       responseParsingStatus: input.normalized.parsingStatus,
+      promptVersion: input.promptMetadata.promptVersion,
+      promptSize: input.promptMetadata.promptSize,
+      providerCapabilityPath: input.promptMetadata.providerCapabilityPath,
+      debugPrompt: input.debugPrompt,
       previousPlanId: input.previousPlan?.id,
       rawProviderResponse: input.includeRawResponse ? input.response.text : undefined,
     },
@@ -740,48 +730,6 @@ function createPlanStep(
       generatedByProvider: providerId,
     },
   };
-}
-
-function buildRepairPrompt(input: {
-  task: Task;
-  originalResponse: string;
-  issues: PlanValidationIssue[];
-  error?: AgentOSError;
-  maxSteps: number;
-}): string {
-  return [
-    "Repair the AgentOS plan JSON.",
-    "Return corrected JSON only. Do not include explanations.",
-    "Preserve the user's intent.",
-    "Do not include ids, task ids, statuses, timestamps, metadata mutations, tool outputs, registry mutations, memory mutations, or executable fields.",
-    "Use only a top-level object with a steps array.",
-    "Each step must include description and may include type, requiredTool, requiredCapability, and input.",
-    `Maximum steps: ${input.maxSteps}.`,
-    JSON.stringify({
-      taskObjective: stringifyTaskInput(input.task.input),
-      validationError: input.error
-        ? {
-            code: input.error.code,
-            message: input.error.message,
-          }
-        : undefined,
-      validationIssues: input.issues.map((issue) => ({
-        code: issue.code,
-        message: issue.message,
-        path: issue.path,
-      })),
-      originalResponse: input.originalResponse.slice(0, 12000),
-    }),
-  ].join("\n");
-}
-
-function repairSystemPrompt(): string {
-  return [
-    "You repair invalid AgentOS plan JSON.",
-    "Return JSON only.",
-    "Never include privileged fields.",
-    "Never include explanations.",
-  ].join(" ");
 }
 
 function normalizeStepType(type: unknown): PlanStepType {
@@ -874,18 +822,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeCapability(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function stringifyTaskInput(input: unknown): string {
-  if (typeof input === "string") {
-    return input;
-  }
-
-  try {
-    return JSON.stringify(input);
-  } catch {
-    return String(input);
-  }
 }
 
 function sanitizeIdSegment(value: string): string {

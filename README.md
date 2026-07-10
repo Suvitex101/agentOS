@@ -42,6 +42,8 @@ integration, database-backed memory, or dashboard functionality.
   workflow smoke testing.
 - [Plan Validation](docs/plan-validation.md): versioned validation and repair
   for model-generated plans.
+- [Planner Prompts](docs/planner-prompts.md): versioned prompt assets for
+  model-assisted planning.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -541,6 +543,15 @@ repaired output is validated again, then accepted, sent to fallback, or failed.
 
 See [docs/plan-validation.md](docs/plan-validation.md).
 
+## Planner Prompts
+
+`ModelAssistedPlanner` builds provider prompts through versioned prompt assets
+instead of inline strings. Prompt metadata records the prompt version, prompt
+size, provider capability path, and validation metrics without storing the full
+prompt by default.
+
+See [docs/planner-prompts.md](docs/planner-prompts.md).
+
 ## Provider Registry
 
 Model providers are first-class discoverable objects in the AgentOS registry.
@@ -637,12 +648,13 @@ pnpm example:openai-compatible-provider
 pnpm example:credential-sdk
 pnpm example:live-model-agent
 pnpm example:plan-validation
+pnpm example:planner-prompts
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,
 tool/connector authoring APIs, provider discovery, model-assisted planning, and
 the mocked HTTP model provider foundation, credential resolution, and plan
-validation.
+validation and planner prompt assets.
 
 ## Testing
 

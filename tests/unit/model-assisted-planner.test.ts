@@ -123,9 +123,12 @@ describe("ModelAssistedPlanner", () => {
       fallbackUsed: false,
       repairAttempted: false,
       repairSucceeded: false,
+      promptVersion: "v1",
+      providerCapabilityPath: "structured-output",
       responseParsingStatus: "parsed",
     });
     expect(plan.metadata?.rawProviderResponse).toBeUndefined();
+    expect(plan.metadata?.debugPrompt).toBeUndefined();
   });
 
   it("resolves a specific provider id", async () => {
@@ -144,6 +147,23 @@ describe("ModelAssistedPlanner", () => {
     );
 
     expect(plan.metadata?.providerId).toBe("preferred-provider");
+  });
+
+  it("can expose the generated prompt only in debug mode", async () => {
+    const agentDefinition = createTestAgent();
+    const task = createTestTask("Plan with prompt debug");
+    const planner = createPlanner(createProvider());
+    const plan = await planner.plan(
+      agentDefinition,
+      task,
+      createExecutionContext(agentDefinition, task),
+      {
+        debugPrompt: true,
+      }
+    );
+
+    expect(plan.metadata?.debugPrompt).toContain("Return JSON only");
+    expect(plan.metadata?.promptSize).toEqual(expect.any(Number));
   });
 
   it("resolves the default provider when allowed", async () => {

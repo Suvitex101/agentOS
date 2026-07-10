@@ -365,6 +365,13 @@ export enum PlannerStrategyType {
   Custom = "custom",
 }
 
+export const PlannerPromptVersion = {
+  V1: "v1",
+} as const;
+
+export type PlannerPromptVersion =
+  (typeof PlannerPromptVersion)[keyof typeof PlannerPromptVersion] | (string & {});
+
 export enum ConnectorHealthStatus {
   Healthy = "healthy",
   Degraded = "degraded",
@@ -707,6 +714,7 @@ export interface ModelAssistedPlannerOptions extends PlannerOptions {
   fallback?: ModelAssistedPlannerFallback;
   includeRawResponse?: boolean;
   repair?: boolean;
+  debugPrompt?: boolean;
   metadata?: AgentOSMetadata;
 }
 

@@ -241,7 +241,12 @@ If provider planning fails, `fallback: "rule-based"` delegates to
 
 `RuleBasedPlanner` remains fully independent and deterministic.
 
-See [Plan Validation](plan-validation.md).
+Model-assisted planning prompts are versioned assets rather than inline strings.
+Planner metadata records the prompt version, prompt size, and whether the
+provider used the `structured-output` or standard prompt path. The full prompt
+is exposed only when `debugPrompt: true` is passed for local debugging.
+
+See [Plan Validation](plan-validation.md) and [Planner Prompts](planner-prompts.md).
 
 ## Current Limitations
 

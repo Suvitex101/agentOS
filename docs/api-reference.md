@@ -272,6 +272,7 @@ Options include:
 - `systemPrompt`
 - `fallback`
 - `includeRawResponse`
+- `debugPrompt`
 
 Provider requests can specify:
 
@@ -287,6 +288,25 @@ normalizes the result, and returns a regular AgentOS `Plan`.
 Provider output is untrusted. AgentOS rejects privileged provider-generated
 fields such as ids, task ids, statuses, timestamps, tool outputs, and registry
 mutations.
+
+## Planner Prompt Assets
+
+Versioned prompt helpers for model-assisted planning.
+
+Exports:
+
+- `PLANNER_PROMPT_VERSION`
+- `PLANNER_PROMPT_METADATA`
+- `DEFAULT_PLANNING_SYSTEM_PROMPT`
+- `REPAIR_SYSTEM_PROMPT`
+- `buildPlanningPrompt(input)`
+- `buildRepairPrompt(input)`
+- `createPlannerPromptMetadata(metadata)`
+
+Current behavior: `ModelAssistedPlanner` records prompt version, prompt size,
+provider capability path, validation success, repair requirement, and fallback
+requirement in plan metadata. The full prompt is omitted unless `debugPrompt:
+true` is passed for local debugging.
 
 ## `SecurityPolicyEngine`
 

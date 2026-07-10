@@ -144,6 +144,18 @@ optional tool hints, input, output, error, and metadata.
 The current planner creates simple three-step plans for analysis, messaging,
 payment, or default tasks.
 
+## Planner Prompts
+
+`ModelAssistedPlanner` uses versioned prompt assets to build planning and repair
+prompts. Prompt construction includes only focused context such as the task,
+agent capabilities, available tools, supported step types, and supported plan
+schema version.
+
+The full prompt is not stored by default. Plan metadata records the prompt
+version, prompt size, provider capability path, and validation metrics.
+
+See [docs/planner-prompts.md](docs/planner-prompts.md).
+
 ## Plan Validation
 
 Model-generated plans are untrusted until validated. `ModelAssistedPlanner`
