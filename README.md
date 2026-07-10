@@ -34,6 +34,8 @@ integration, database-backed memory, or dashboard functionality.
   permissions, and future policy model for connectors.
 - [Model Provider SDK](docs/model-provider-sdk.md): provider abstraction for
   future reasoning engines.
+- [HTTP Model Provider Foundation](docs/http-model-provider.md): secure
+  transport base and OpenAI-compatible adapter foundation.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
@@ -155,6 +157,12 @@ Run the model-assisted planner example:
 
 ```bash
 pnpm example:model-assisted-planner
+```
+
+Run the OpenAI-compatible provider foundation example:
+
+```bash
+pnpm example:openai-compatible-provider
 ```
 
 Run the local quality gate:
@@ -422,10 +430,26 @@ const provider = defineModelProvider({
 });
 ```
 
-AgentOS currently includes `MockModelProvider` and `EchoModelProvider` for local
-tests and examples. No external model APIs are implemented yet.
+AgentOS currently includes `MockModelProvider`, `EchoModelProvider`, and an HTTP
+provider foundation for future remote adapters. `createOpenAICompatibleProvider()`
+maps AgentOS generation requests to an OpenAI-compatible chat-completions shape,
+but examples use mocked transport only. No live model provider API calls or
+API-key helpers are implemented yet.
 
 See [docs/model-provider-sdk.md](docs/model-provider-sdk.md).
+
+## HTTP Model Provider Foundation
+
+`HTTPModelProviderBase` centralizes secure transport behavior for future remote
+model providers: HTTPS enforcement, optional localhost support, timeouts,
+response size limits, redirect rejection, JSON validation, typed errors, and
+secret redaction.
+
+Adapters handle provider-specific request and response mapping. The first
+adapter is `createOpenAICompatibleProvider()`.
+
+See [docs/http-model-provider.md](docs/http-model-provider.md) and
+`examples/openai-compatible-provider`.
 
 ## Provider Registry
 
@@ -519,10 +543,12 @@ pnpm example:http
 pnpm example:model-provider
 pnpm example:provider-registry
 pnpm example:model-assisted-planner
+pnpm example:openai-compatible-provider
 ```
 
 Examples demonstrate the current runtime, memory behavior, tool resolution,
-tool/connector authoring APIs, provider discovery, and model-assisted planning.
+tool/connector authoring APIs, provider discovery, model-assisted planning, and
+the mocked HTTP model provider foundation.
 
 ## Testing
 

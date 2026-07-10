@@ -121,6 +121,7 @@ Built-in local providers:
 
 - `MockModelProvider`
 - `EchoModelProvider`
+- `createOpenAICompatibleProvider()`
 
 Provider capabilities are extensible strings. Common exported capability
 constants include:
@@ -132,9 +133,44 @@ constants include:
 - `ModelProviderCapability.Multimodal`
 - `ModelProviderCapability.StructuredOutput`
 
-Current behavior: provider definitions are local abstractions. They are
-discoverable through the registry, but they are not integrated with planners or
-runtime execution yet.
+Current behavior: provider definitions are discoverable through the registry and
+can be used by `ModelAssistedPlanner` through `ModelProviderResolver`.
+
+## `HTTPModelProviderBase`
+
+Reusable HTTP transport foundation for remote model providers.
+
+Configuration:
+
+- `baseUrl`
+- `timeoutMs`
+- `maxResponseBytes`
+- `defaultHeaders`
+- `allowLocalhost`
+- `userAgent`
+
+The base enforces HTTPS for remote hosts, rejects redirects, validates JSON
+responses, caps response size, measures duration, normalizes typed errors, and
+redacts common secrets.
+
+## `createOpenAICompatibleProvider(options)`
+
+Creates an OpenAI-compatible provider adapter using `HTTPModelProviderBase`.
+
+Important fields:
+
+- `model`
+- `transport`
+- `id`
+- `name`
+- `version`
+- `capabilities`
+- `tags`
+- `metadata`
+
+This is adapter foundation code, not a live OpenAI integration. It does not
+include API-key helpers, authentication, streaming, retries, or vendor-specific
+runtime behavior.
 
 ## `AgentOSRegistry`
 

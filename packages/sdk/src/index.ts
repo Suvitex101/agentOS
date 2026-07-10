@@ -113,4 +113,17 @@ export type {
   WriteFileInput,
   WriteFileOutput,
 } from "@agentos/connectors";
+export {
+  HTTPModelProviderBase,
+  agentOSProviders,
+  createOpenAICompatibleProvider,
+} from "@agentos/providers";
+export type {
+  HTTPModelProviderAdapter,
+  HTTPModelProviderAdapterResponse,
+  HTTPModelProviderFetch,
+  HTTPModelProviderRequest,
+  HTTPModelProviderTransportConfig,
+  OpenAICompatibleProviderOptions,
+} from "@agentos/providers";
 export * from "@agentos/types";

@@ -3,6 +3,7 @@ export type AgentOSPackageName =
   | "@agentos/tools"
   | "@agentos/memory"
   | "@agentos/connectors"
+  | "@agentos/providers"
   | "@agentos/sdk"
   | "@agentos/types"
   | "@agentos/config";

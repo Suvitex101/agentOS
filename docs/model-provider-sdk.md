@@ -12,7 +12,8 @@ Internally, the abstraction is intentionally broader than LLMs. A provider can
 represent a language model, deterministic reasoning engine, local simulator,
 classifier, verifier, or future non-LLM reasoning system.
 
-This phase does not integrate providers with planners or runtime execution.
+Providers are discoverable through the registry and can be used by
+`ModelAssistedPlanner` through `ModelProviderResolver`.
 
 ## Philosophy
 
@@ -82,6 +83,42 @@ AgentOS includes two local providers:
 - `EchoModelProvider`: returns the prompt exactly
 
 They do not call external APIs.
+
+## HTTP Provider Foundation
+
+AgentOS includes `HTTPModelProviderBase` for future remote providers. It owns
+provider-agnostic transport behavior:
+
+- HTTPS enforcement
+- optional localhost support
+- timeout
+- maximum response size
+- redirect rejection
+- JSON content-type validation
+- JSON parsing
+- duration measurement
+- typed error normalization
+- secret redaction
+
+Provider adapters own request and response mapping. The first adapter is
+`createOpenAICompatibleProvider()`, which maps AgentOS generation requests to an
+OpenAI-compatible chat-completions shape.
+
+```ts
+import { HTTPModelProviderBase, createOpenAICompatibleProvider } from "@agentos/sdk";
+
+const transport = new HTTPModelProviderBase({
+  baseUrl: "https://api.example.com",
+});
+
+const provider = createOpenAICompatibleProvider({
+  model: "example-model",
+  transport,
+});
+```
+
+The example at `examples/openai-compatible-provider` uses a deterministic mocked
+transport. It does not call a live provider and does not require API keys.
 
 ## Provider Capabilities
 
@@ -177,12 +214,12 @@ If provider planning fails, `fallback: "rule-based"` delegates to
 
 ## Current Limitations
 
-- no OpenAI, Anthropic, Gemini, or Ollama integration
-- no API keys
+- no live OpenAI, Anthropic, Gemini, or Ollama integration
+- no API-key helper or secret manager
 - no authentication
 - no streaming
-- no runtime integration
-- no external provider integration
+- no retries
+- no live external provider examples
 
 Future provider integrations should build on this contract without making
 AgentOS model-centric.

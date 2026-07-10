@@ -1,22 +1,19 @@
 {
-  "name": "@agentos/sdk",
+  "name": "@agentos/providers",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
-    "@agentos/connectors": "workspace:*",
-    "@agentos/core": "workspace:*",
-    "@agentos/memory": "workspace:*",
-    "@agentos/providers": "workspace:*",
-    "@agentos/types": "workspace:*"
-  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agentos/core": "workspace:*",
+    "@agentos/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.7"

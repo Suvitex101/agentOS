@@ -97,6 +97,19 @@ importers:
         specifier: workspace:*
         version: link:../types
 
+  packages/providers:
+    dependencies:
+      '@agentos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@agentos/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.0
+
   packages/sdk:
     dependencies:
       '@agentos/connectors':
@@ -108,6 +121,9 @@ importers:
       '@agentos/memory':
         specifier: workspace:*
         version: link:../memory
+      '@agentos/providers':
+        specifier: workspace:*
+        version: link:../providers
       '@agentos/types':
         specifier: workspace:*
         version: link:../types
