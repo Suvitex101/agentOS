@@ -145,6 +145,12 @@ Run the model provider example:
 pnpm example:model-provider
 ```
 
+Run the provider registry example:
+
+```bash
+pnpm example:provider-registry
+```
+
 Run the local quality gate:
 
 ```bash
@@ -415,6 +421,27 @@ tests and examples. No external model APIs are implemented yet.
 
 See [docs/model-provider-sdk.md](docs/model-provider-sdk.md).
 
+## Provider Registry
+
+Model providers are first-class discoverable objects in the AgentOS registry.
+Register providers with `registerModelProvider()` and resolve them through
+`ModelProviderResolver`.
+
+```ts
+import { AgentOSRegistry, MockModelProvider, ModelProviderResolver } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+
+registry.registerModelProvider(MockModelProvider);
+registry.setDefaultModelProvider("mock");
+
+const resolver = new ModelProviderResolver({ registry });
+const provider = resolver.resolve().provider;
+```
+
+Planners should use a resolver boundary instead of querying registry internals
+directly. Planner integration is future work.
+
 ## Run An Agent
 
 ```ts
@@ -456,10 +483,13 @@ pnpm example:custom-tool
 pnpm example:research-connector
 pnpm example:community-connector
 pnpm example:filesystem
+pnpm example:http
+pnpm example:model-provider
+pnpm example:provider-registry
 ```
 
-Examples demonstrate the current runtime, memory behavior, tool resolution, and
-tool/connector authoring APIs.
+Examples demonstrate the current runtime, memory behavior, tool resolution,
+tool/connector authoring APIs, and provider discovery.
 
 ## Testing
 

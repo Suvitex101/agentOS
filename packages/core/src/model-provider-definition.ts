@@ -4,6 +4,7 @@ import {
   type AgentOSMetadata,
   type ModelGenerationRequest,
   type ModelGenerationResponse,
+  type ModelProviderCapability,
   type ModelProvider,
   type ToolAuthor,
 } from "@agentos/types";
@@ -22,7 +23,7 @@ export interface ModelProviderDefinitionConfig {
   author?: ToolAuthor;
   tags?: string[];
   metadata?: AgentOSMetadata;
-  capabilities?: string[];
+  capabilities?: ModelProviderCapability[];
   generate: (
     request: ModelGenerationRequest
   ) => Promise<ModelGenerationResponse> | ModelGenerationResponse;
@@ -30,7 +31,7 @@ export interface ModelProviderDefinitionConfig {
 
 export interface ModelProviderDefinition extends ModelProvider {
   tags: string[];
-  capabilities: string[];
+  capabilities: ModelProviderCapability[];
   inspect(): ModelProviderInspection;
   summary(): ModelProviderSummary;
 }
@@ -42,7 +43,7 @@ export interface ModelProviderInspection {
   version: string;
   author?: ToolAuthor;
   tags: string[];
-  capabilities: string[];
+  capabilities: ModelProviderCapability[];
   generationSignature: "generate(request)";
   metadata?: AgentOSMetadata;
 }
@@ -52,7 +53,7 @@ export interface ModelProviderSummary {
   name: string;
   description?: string;
   version: string;
-  capabilities: string[];
+  capabilities: ModelProviderCapability[];
   tags: string[];
 }
 

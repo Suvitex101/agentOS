@@ -23,6 +23,7 @@ describe("runnable examples", () => {
     ["filesystem-connector", "../../examples/filesystem-connector/index.ts"],
     ["http-connector", "../../examples/http-connector/index.ts"],
     ["model-provider", "../../examples/model-provider/index.ts"],
+    ["provider-registry", "../../examples/provider-registry/index.ts"],
   ])("runs the %s example", async (_name, path) => {
     await expect(import(path)).resolves.toBeDefined();
     expect(process.exitCode).toBeUndefined();

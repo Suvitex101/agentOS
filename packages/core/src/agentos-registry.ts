@@ -6,6 +6,7 @@ import {
   type AgentOSMetadata,
   type Capability,
   type ConnectorManifest,
+  type ModelProvider,
   type RegisteredTool,
   type RegistryOperationResult,
   type RegistrySummary,
@@ -35,8 +36,10 @@ export class AgentOSRegistry {
   private readonly connectors = new Map<string, ConnectorManifest>();
   private readonly tools = new Map<string, RegisteredTool>();
   private readonly resources = new Map<string, Resource>();
+  private readonly modelProviders = new Map<string, ModelProvider>();
   private readonly connectorBundles = new Map<string, ConnectorBundleRegistration>();
   private readonly securityPolicyEngine: SecurityPolicyEngine;
+  private defaultModelProviderId?: string;
 
   constructor(options: AgentOSRegistryOptions = {}) {
     this.securityPolicyEngine = options.securityPolicyEngine ?? new SecurityPolicyEngine();
@@ -56,6 +59,25 @@ export class AgentOSRegistry {
 
   registerResource(resource: Resource): RegistryOperationResult<Resource> {
     return this.register(this.resources, resource, "resource");
+  }
+
+  registerModelProvider(provider: ModelProvider): RegistryOperationResult<ModelProvider> {
+    const validation = this.validateModelProviderRegistration(provider);
+
+    if (!validation.success) {
+      return validation;
+    }
+
+    this.modelProviders.set(provider.id, provider);
+
+    if (!this.defaultModelProviderId) {
+      this.defaultModelProviderId = provider.id;
+    }
+
+    return {
+      success: true,
+      item: provider,
+    };
   }
 
   registerConnectorBundle(
@@ -157,6 +179,16 @@ export class AgentOSRegistry {
     return this.unregister(this.resources, resourceId, "resource");
   }
 
+  unregisterModelProvider(providerId: string): RegistryOperationResult<ModelProvider> {
+    const result = this.unregister(this.modelProviders, providerId, "model provider");
+
+    if (result.success && this.defaultModelProviderId === providerId) {
+      this.defaultModelProviderId = undefined;
+    }
+
+    return result;
+  }
+
   unregisterConnectorBundle(
     connectorId: string
   ): RegistryOperationResult<ConnectorBundleRegistration> {
@@ -212,6 +244,10 @@ export class AgentOSRegistry {
     return this.resources.get(resourceId);
   }
 
+  findModelProvider(providerId: string): ModelProvider | undefined {
+    return this.modelProviders.get(providerId);
+  }
+
   findConnectorBundle(connectorId: string): ConnectorBundleRegistration | undefined {
     return this.connectorBundles.get(connectorId);
   }
@@ -246,8 +282,60 @@ export class AgentOSRegistry {
     return [...this.resources.values()];
   }
 
+  listModelProviders(): ModelProvider[] {
+    return [...this.modelProviders.values()];
+  }
+
   listConnectorBundles(): ConnectorBundleRegistration[] {
     return [...this.connectorBundles.values()];
+  }
+
+  defaultModelProvider(): ModelProvider | undefined {
+    return this.defaultModelProviderId
+      ? this.modelProviders.get(this.defaultModelProviderId)
+      : undefined;
+  }
+
+  setDefaultModelProvider(providerId: string): RegistryOperationResult<ModelProvider> {
+    const provider = this.modelProviders.get(providerId);
+
+    if (!provider) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_unknown_default_model_provider",
+          `Model provider "${providerId}" is not registered.`
+        ),
+      };
+    }
+
+    this.defaultModelProviderId = providerId;
+
+    return {
+      success: true,
+      item: provider,
+    };
+  }
+
+  clearDefaultModelProvider(): RegistryOperationResult<ModelProvider> {
+    const provider = this.defaultModelProvider();
+
+    if (!provider) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_default_model_provider_not_set",
+          "No default model provider is set."
+        ),
+      };
+    }
+
+    this.defaultModelProviderId = undefined;
+
+    return {
+      success: true,
+      item: provider,
+    };
   }
 
   summary(): RegistrySummary {
@@ -256,6 +344,7 @@ export class AgentOSRegistry {
       connectors: this.connectors.size,
       tools: this.tools.size,
       resources: this.resources.size,
+      modelProviders: this.modelProviders.size,
     };
   }
 
@@ -322,6 +411,38 @@ export class AgentOSRegistry {
           metadata: {
             source: resource.source,
           },
+        });
+      }
+    }
+
+    if (this.defaultModelProviderId && !this.modelProviders.has(this.defaultModelProviderId)) {
+      issues.push({
+        code: "registry_unknown_default_model_provider",
+        message: `Default model provider "${this.defaultModelProviderId}" is not registered.`,
+        severity: "error",
+        entityType: "model_provider",
+        entityId: this.defaultModelProviderId,
+      });
+    }
+
+    for (const provider of this.modelProviders.values()) {
+      if (provider.capabilities.length === 0) {
+        issues.push({
+          code: "registry_model_provider_missing_capabilities",
+          message: `Model provider "${provider.id}" does not declare capabilities.`,
+          severity: "error",
+          entityType: "model_provider",
+          entityId: provider.id,
+        });
+      }
+
+      if (provider.metadata !== undefined && !isPlainObject(provider.metadata)) {
+        issues.push({
+          code: "registry_model_provider_invalid_metadata",
+          message: `Model provider "${provider.id}" has invalid metadata.`,
+          severity: "error",
+          entityType: "model_provider",
+          entityId: provider.id,
         });
       }
     }
@@ -470,6 +591,45 @@ export class AgentOSRegistry {
     };
   }
 
+  private validateModelProviderRegistration(
+    provider: ModelProvider
+  ): RegistryOperationResult<ModelProvider> {
+    if (this.modelProviders.has(provider.id)) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_duplicate_model_provider",
+          `Model provider "${provider.id}" is already registered.`
+        ),
+      };
+    }
+
+    if (!provider.capabilities.length) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_model_provider_missing_capabilities",
+          `Model provider "${provider.id}" must declare at least one capability.`
+        ),
+      };
+    }
+
+    if (provider.metadata !== undefined && !isPlainObject(provider.metadata)) {
+      return {
+        success: false,
+        error: createRegistryError(
+          "registry_model_provider_invalid_metadata",
+          `Model provider "${provider.id}" metadata must be a plain object.`
+        ),
+      };
+    }
+
+    return {
+      success: true,
+      item: provider,
+    };
+  }
+
   private isCapabilityReferenced(capabilityId: string): boolean {
     return [...this.connectors.values()].some((connector) =>
       connector.capabilities.capabilities.some((capability) => capability.id === capabilityId)
@@ -606,4 +766,8 @@ function findDuplicate(values: string[]): string | undefined {
   }
 
   return undefined;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }

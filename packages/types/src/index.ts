@@ -204,6 +204,18 @@ export enum ModelFinishReason {
   Unknown = "unknown",
 }
 
+export const ModelProviderCapability = {
+  TextGeneration: "text-generation",
+  Reasoning: "reasoning",
+  LongContext: "long-context",
+  Embeddings: "embeddings",
+  Multimodal: "multimodal",
+  StructuredOutput: "structured-output",
+} as const;
+
+export type ModelProviderCapability =
+  (typeof ModelProviderCapability)[keyof typeof ModelProviderCapability] | (string & {});
+
 export enum MemoryType {
   Fact = "fact",
   Preference = "preference",
@@ -429,7 +441,7 @@ export interface ModelProvider {
   author?: ToolAuthor;
   tags?: string[];
   metadata?: AgentOSMetadata;
-  capabilities: string[];
+  capabilities: ModelProviderCapability[];
   generate(
     request: ModelGenerationRequest
   ): Promise<ModelGenerationResponse> | ModelGenerationResponse;
@@ -501,6 +513,7 @@ export interface RegistrySummary {
   connectors: number;
   tools: number;
   resources: number;
+  modelProviders?: number;
   metadata?: AgentOSMetadata;
 }
 
@@ -508,7 +521,7 @@ export interface RegistryValidationIssue {
   code: string;
   message: string;
   severity: "error" | "warning";
-  entityType: "capability" | "connector" | "tool" | "resource";
+  entityType: "capability" | "connector" | "tool" | "resource" | "model_provider";
   entityId?: string;
   metadata?: AgentOSMetadata;
 }
@@ -832,6 +845,25 @@ export interface ToolResolutionResult {
 
 export interface ToolResolver {
   resolve(request: ToolResolutionRequest): ToolResolutionResult;
+}
+
+export interface ModelProviderResolutionRequest {
+  providerId?: string;
+  capability?: string;
+  useDefault?: boolean;
+  metadata?: AgentOSMetadata;
+}
+
+export interface ModelProviderResolutionResult {
+  success: boolean;
+  provider?: ModelProvider;
+  reason?: string;
+  errors: AgentOSError[];
+  metadata?: AgentOSMetadata;
+}
+
+export interface ModelProviderResolver {
+  resolve(request?: ModelProviderResolutionRequest): ModelProviderResolutionResult;
 }
 
 export interface ToolCallRecord {

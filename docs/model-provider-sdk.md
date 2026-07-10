@@ -83,6 +83,64 @@ AgentOS includes two local providers:
 
 They do not call external APIs.
 
+## Provider Capabilities
+
+Providers declare capabilities as extensible strings. AgentOS exports common
+capability constants:
+
+- `text-generation`
+- `reasoning`
+- `long-context`
+- `embeddings`
+- `multimodal`
+- `structured-output`
+
+Custom capability strings are allowed so future reasoning systems can fit
+without changing the core type model.
+
+## Provider Registry
+
+Model providers can be registered with the AgentOS Registry:
+
+```ts
+import { AgentOSRegistry, MockModelProvider } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+
+registry.registerModelProvider(MockModelProvider);
+registry.setDefaultModelProvider("mock");
+```
+
+Registry support includes:
+
+- `registerModelProvider()`
+- `unregisterModelProvider()`
+- `findModelProvider()`
+- `listModelProviders()`
+- `setDefaultModelProvider()`
+- `clearDefaultModelProvider()`
+- `defaultModelProvider()`
+
+## Provider Resolver
+
+`ModelProviderResolver` is the lookup boundary for providers:
+
+```ts
+import { ModelProviderCapability, ModelProviderResolver } from "@agentos/sdk";
+
+const resolver = new ModelProviderResolver({ registry });
+
+const defaultProvider = resolver.resolve();
+const reasoningProvider = resolver.resolve({
+  capability: ModelProviderCapability.Reasoning,
+});
+```
+
+Planners should depend on this resolver boundary rather than querying the
+registry directly. This keeps planner implementations independent of registry
+storage details and preserves the same separation already used for tool
+resolution.
+
 ## Current Limitations
 
 - no OpenAI, Anthropic, Gemini, or Ollama integration

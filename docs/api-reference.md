@@ -122,8 +122,19 @@ Built-in local providers:
 - `MockModelProvider`
 - `EchoModelProvider`
 
-Current behavior: provider definitions are local abstractions only. They are not
-integrated with planners or runtime execution yet.
+Provider capabilities are extensible strings. Common exported capability
+constants include:
+
+- `ModelProviderCapability.TextGeneration`
+- `ModelProviderCapability.Reasoning`
+- `ModelProviderCapability.LongContext`
+- `ModelProviderCapability.Embeddings`
+- `ModelProviderCapability.Multimodal`
+- `ModelProviderCapability.StructuredOutput`
+
+Current behavior: provider definitions are local abstractions. They are
+discoverable through the registry, but they are not integrated with planners or
+runtime execution yet.
 
 ## `AgentOSRegistry`
 
@@ -134,6 +145,7 @@ In-memory registry for:
 - tools
 - resources
 - connector bundles
+- model providers
 
 Common methods:
 
@@ -143,6 +155,13 @@ Common methods:
 - `registerResource()`
 - `registerConnectorBundle()`
 - `unregisterConnectorBundle()`
+- `registerModelProvider()`
+- `unregisterModelProvider()`
+- `findModelProvider()`
+- `listModelProviders()`
+- `setDefaultModelProvider()`
+- `clearDefaultModelProvider()`
+- `defaultModelProvider()`
 - `findToolById()`
 - `findToolsByCapability()`
 - `findConnectorsByCapability()`
@@ -155,6 +174,19 @@ Common methods:
 
 The registry can receive a `SecurityPolicyEngine` and delegates connector bundle
 admission to it before registration.
+
+## `ModelProviderResolver`
+
+Resolves model providers from an `AgentOSRegistry`.
+
+Resolution inputs can include:
+
+- explicit provider id
+- capability
+- default provider
+
+The resolver exists so planners and future orchestration code do not depend on
+registry implementation details directly.
 
 ## `SecurityPolicyEngine`
 
