@@ -49,8 +49,12 @@ publish packages by itself.
 - [ ] API reference is current.
 - [ ] Architecture docs are current.
 - [ ] Release notes are drafted.
+- [ ] GitHub release draft is current.
+- [ ] Announcement drafts are current.
 - [ ] Known limitations are explicit.
 - [ ] License is present.
+- [ ] Package-level READMEs are present for publishable packages.
+- [ ] Package tarballs include license files.
 
 ## Known Non-Blocking Warnings
 
@@ -65,6 +69,8 @@ publish packages by itself.
 - [ ] npm organization/package access is confirmed.
 - [ ] Publishing account permissions are confirmed.
 - [ ] Dry-run package contents are reviewed.
+- [ ] `docs/release/github-release.md` is ready to copy into GitHub.
+- [ ] `docs/release/announcement.md` is reviewed for public announcement use.
 - [ ] Git tag plan is confirmed.
 - [ ] GitHub release notes are prepared.
 

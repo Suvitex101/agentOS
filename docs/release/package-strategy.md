@@ -49,13 +49,17 @@ Publishable packages expose only their root public entry point:
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   }
 }
 ```
 
 Internal implementation files are not public API.
+
+Each publishable package includes a package-level README and Apache-2.0 license
+metadata. The root repository license remains the source of truth.
 
 ## Alpha Stability
 

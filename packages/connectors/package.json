@@ -1,23 +1,24 @@
 {
   "name": "@agentos/connectors",
   "version": "0.1.0-alpha.1",
-  "description": "Local connector implementations for AgentOS.",
+  "description": "Filesystem, HTTP, and GitHub connector implementations for AgentOS.",
   "type": "module",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Suvitex101/agaentOS.git",
+    "url": "git+https://github.com/Suvitex101/agentOS.git",
     "directory": "packages/connectors"
   },
-  "homepage": "https://github.com/Suvitex101/agaentOS#readme",
+  "homepage": "https://github.com/Suvitex101/agentOS#readme",
   "bugs": {
-    "url": "https://github.com/Suvitex101/agaentOS/issues"
+    "url": "https://github.com/Suvitex101/agentOS/issues"
   },
   "keywords": [
     "agentos",
     "connectors",
     "filesystem",
     "http",
+    "github",
     "typescript"
   ],
   "main": "./dist/index.js",

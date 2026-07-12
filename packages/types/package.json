@@ -6,12 +6,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Suvitex101/agaentOS.git",
+    "url": "git+https://github.com/Suvitex101/agentOS.git",
     "directory": "packages/types"
   },
-  "homepage": "https://github.com/Suvitex101/agaentOS#readme",
+  "homepage": "https://github.com/Suvitex101/agentOS#readme",
   "bugs": {
-    "url": "https://github.com/Suvitex101/agaentOS/issues"
+    "url": "https://github.com/Suvitex101/agentOS/issues"
   },
   "keywords": [
     "agentos",

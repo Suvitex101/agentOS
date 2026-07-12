@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "description": "Open-source AI agent infrastructure for the Global South, starting with Africa.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suvitex101/agentOS.git"
+  },
+  "homepage": "https://github.com/Suvitex101/agentOS#readme",
+  "bugs": {
+    "url": "https://github.com/Suvitex101/agentOS/issues"
+  },
+  "keywords": [
+    "agentos",
+    "ai-agents",
+    "agent-infrastructure",
+    "typescript",
+    "open-source"
+  ],
   "packageManager": "pnpm@11.7.0",
   "scripts": {
     "dev": "turbo dev",
