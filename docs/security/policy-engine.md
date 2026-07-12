@@ -112,7 +112,7 @@ const policy = SecurityPolicyEngine.researchPolicy();
 ## Registry Integration
 
 ```ts
-import { AgentOSRegistry, SecurityPolicyEngine, createFilesystemConnector } from "@agentos/sdk";
+import { AgentOSRegistry, SecurityPolicyEngine, createFilesystemConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry({
   securityPolicyEngine: SecurityPolicyEngine.developerPolicy(),

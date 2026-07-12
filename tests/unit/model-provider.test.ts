@@ -6,7 +6,7 @@ import {
   ModelProviderDefinitionValidationError,
   defineModelProvider,
   validateModelProviderDefinitionConfig,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("defineModelProvider", () => {
   it("validates required fields and semantic version format", () => {

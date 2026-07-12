@@ -11,7 +11,7 @@ import {
   type AgentDefinition,
   type CreateTaskInput,
   type Task,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 export function createTestRegistry(): AgentOSRegistry {
   return createAgentOSRegistryBootstrapExample();

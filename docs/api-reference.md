@@ -1,6 +1,6 @@
 # AgentOS API Reference
 
-This is a starter reference for the main public exports from `@agentos/sdk`.
+This is a starter reference for the main public exports from `@agentosdev/sdk`.
 It reflects the current implementation.
 
 ## `defineAgent(config)`
@@ -233,7 +233,7 @@ version when available.
 Example:
 
 ```ts
-import { AgentOSRegistry, createOllamaProvider } from "@agentos/sdk";
+import { AgentOSRegistry, createOllamaProvider } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const provider = createOllamaProvider({
@@ -449,7 +449,7 @@ Represents a local community platform and bundles:
 Register it with:
 
 ```ts
-import { AgentOSRegistry, LocalCommunityConnector } from "@agentos/sdk";
+import { AgentOSRegistry, LocalCommunityConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 
@@ -486,7 +486,7 @@ The connector exposes:
 Example:
 
 ```ts
-import { AgentOSRegistry, createFilesystemConnector } from "@agentos/sdk";
+import { AgentOSRegistry, createFilesystemConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const filesystemConnector = createFilesystemConnector({
@@ -534,7 +534,7 @@ The connector exposes:
 Example:
 
 ```ts
-import { AgentOSRegistry, createHttpConnector } from "@agentos/sdk";
+import { AgentOSRegistry, createHttpConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const httpConnector = createHttpConnector({
@@ -602,7 +602,7 @@ The connector exposes:
 Example:
 
 ```ts
-import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentos/sdk";
+import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const github = createGitHubConnector({

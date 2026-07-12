@@ -4,7 +4,7 @@ import {
   LocalCommunityConnector,
   ResourceType,
   defineConnector,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("connector bundles", () => {
   it("registers a connector bundle and discovers its contents", () => {

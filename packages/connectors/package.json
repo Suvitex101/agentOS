@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/connectors",
+  "name": "@agentosdev/connectors",
   "version": "0.1.0-alpha.1",
   "description": "Filesystem, HTTP, and GitHub connector implementations for AgentOS.",
   "type": "module",
@@ -41,8 +41,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentos/core": "workspace:^",
-    "@agentos/types": "workspace:^"
+    "@agentosdev/core": "workspace:^",
+    "@agentosdev/types": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.10.7"

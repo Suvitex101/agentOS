@@ -7,7 +7,7 @@ import {
   createTask,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const registration = registry.registerConnectorBundle(LocalCommunityConnector);

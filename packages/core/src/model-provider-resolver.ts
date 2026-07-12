@@ -3,7 +3,7 @@ import {
   type ModelProviderResolutionRequest,
   type ModelProviderResolutionResult,
   type ModelProviderResolver as ModelProviderResolverContract,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import type { AgentOSRegistry } from "./agentos-registry";
 
 export interface ModelProviderResolverOptions {

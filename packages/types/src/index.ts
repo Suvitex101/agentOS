@@ -1,15 +1,15 @@
 export type AgentOSPackageName =
-  | "@agentos/core"
-  | "@agentos/tools"
-  | "@agentos/memory"
-  | "@agentos/connectors"
-  | "@agentos/providers"
-  | "@agentos/sdk"
-  | "@agentos/types"
-  | "@agentos/config";
+  | "@agentosdev/core"
+  | "@agentosdev/tools"
+  | "@agentosdev/memory"
+  | "@agentosdev/connectors"
+  | "@agentosdev/providers"
+  | "@agentosdev/sdk"
+  | "@agentosdev/types"
+  | "@agentosdev/config";
 
 export const agentOSTypes = {
-  name: "@agentos/types",
+  name: "@agentosdev/types",
   description: "Shared domain types for AgentOS packages.",
 } as const;
 

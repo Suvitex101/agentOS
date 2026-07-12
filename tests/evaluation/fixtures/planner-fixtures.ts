@@ -1,4 +1,4 @@
-import { ModelProviderCapability, PlanStepType, type AgentCapability } from "@agentos/sdk";
+import { ModelProviderCapability, PlanStepType, type AgentCapability } from "@agentosdev/sdk";
 
 export interface PlannerEvaluationFixture {
   id: string;

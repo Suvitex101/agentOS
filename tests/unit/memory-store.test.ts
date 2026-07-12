@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MemoryScope, MemoryType } from "@agentos/sdk";
+import { MemoryScope, MemoryType } from "@agentosdev/sdk";
 import { createTestMemory } from "../helpers/test-helpers";
 
 describe("InMemoryMemoryStore", () => {

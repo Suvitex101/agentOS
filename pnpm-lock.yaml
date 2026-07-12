@@ -35,7 +35,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@agentos/core':
+      '@agentosdev/core':
         specifier: workspace:^
         version: link:../../packages/core
       next:
@@ -71,10 +71,10 @@ importers:
 
   packages/connectors:
     dependencies:
-      '@agentos/core':
+      '@agentosdev/core':
         specifier: workspace:^
         version: link:../core
-      '@agentos/types':
+      '@agentosdev/types':
         specifier: workspace:^
         version: link:../types
     devDependencies:
@@ -84,25 +84,25 @@ importers:
 
   packages/core:
     dependencies:
-      '@agentos/memory':
+      '@agentosdev/memory':
         specifier: workspace:^
         version: link:../memory
-      '@agentos/types':
+      '@agentosdev/types':
         specifier: workspace:^
         version: link:../types
 
   packages/memory:
     dependencies:
-      '@agentos/types':
+      '@agentosdev/types':
         specifier: workspace:^
         version: link:../types
 
   packages/providers:
     dependencies:
-      '@agentos/core':
+      '@agentosdev/core':
         specifier: workspace:^
         version: link:../core
-      '@agentos/types':
+      '@agentosdev/types':
         specifier: workspace:^
         version: link:../types
     devDependencies:
@@ -112,19 +112,19 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@agentos/connectors':
+      '@agentosdev/connectors':
         specifier: workspace:^
         version: link:../connectors
-      '@agentos/core':
+      '@agentosdev/core':
         specifier: workspace:^
         version: link:../core
-      '@agentos/memory':
+      '@agentosdev/memory':
         specifier: workspace:^
         version: link:../memory
-      '@agentos/providers':
+      '@agentosdev/providers':
         specifier: workspace:^
         version: link:../providers
-      '@agentos/types':
+      '@agentosdev/types':
         specifier: workspace:^
         version: link:../types
     devDependencies:

@@ -1,13 +1,13 @@
-import { agentOSCore } from "@agentos/core";
+import { agentOSCore } from "@agentosdev/core";
 
 const packageNames = [
-  "@agentos/core",
-  "@agentos/tools",
-  "@agentos/memory",
-  "@agentos/connectors",
-  "@agentos/sdk",
-  "@agentos/types",
-  "@agentos/config",
+  "@agentosdev/core",
+  "@agentosdev/tools",
+  "@agentosdev/memory",
+  "@agentosdev/connectors",
+  "@agentosdev/sdk",
+  "@agentosdev/types",
+  "@agentosdev/config",
 ];
 
 export default function Home() {

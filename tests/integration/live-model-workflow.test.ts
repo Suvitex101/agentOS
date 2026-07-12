@@ -17,7 +17,7 @@ import {
   createOpenAICompatibleProvider,
   defineAgent,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("live model workflow architecture", () => {
   it("runs deterministically through provider, credentials, planner, filesystem tools, execution, and memory", async () => {

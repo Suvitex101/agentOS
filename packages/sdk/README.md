@@ -1,11 +1,11 @@
-# @agentos/sdk
+# @agentosdev/sdk
 
 Primary public SDK entry point for AgentOS.
 
 ## Install
 
 ```bash
-npm install @agentos/sdk
+npm install @agentosdev/sdk
 ```
 
 ## Purpose

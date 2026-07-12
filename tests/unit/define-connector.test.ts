@@ -10,7 +10,7 @@ import {
   defineMessagingConnector,
   defineTool,
   validateConnectorDefinitionConfig,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const testTool = defineTool({
   id: "tool-connector-test",

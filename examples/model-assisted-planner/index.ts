@@ -8,7 +8,7 @@ import {
   defineModelProvider,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const validProvider = defineModelProvider({
   id: "local-structured-planner",

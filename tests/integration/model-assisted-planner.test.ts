@@ -12,7 +12,7 @@ import {
   defineModelProvider,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import { createTestRegistry } from "../helpers/test-helpers";
 
 describe("ModelAssistedPlanner integration", () => {

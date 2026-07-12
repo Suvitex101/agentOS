@@ -4,7 +4,7 @@ import {
   HTTPModelProviderBase,
   createOpenAICompatibleProvider,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const mockedFetch: HTTPModelProviderFetch = async () =>
   new Response(

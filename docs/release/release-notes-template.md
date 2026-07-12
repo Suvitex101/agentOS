@@ -13,7 +13,7 @@ Briefly describe the release and its intended audience.
 ## Installation
 
 ```bash
-npm install @agentos/sdk
+npm install @agentosdev/sdk
 ```
 
 ## Minimal Example
@@ -25,7 +25,7 @@ import {
   RuleBasedPlanner,
   SimpleExecutionEngine,
   defineAgent,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const agent = defineAgent({
   id: "example-agent",

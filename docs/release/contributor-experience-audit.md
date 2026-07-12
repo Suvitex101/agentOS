@@ -26,7 +26,7 @@ pnpm release:check
 ## What Is Clear
 
 - README explains the task-centric architecture and links to deeper docs.
-- `@agentos/sdk` is documented as the primary public entry point.
+- `@agentosdev/sdk` is documented as the primary public entry point.
 - Examples cover basic agent usage, memory, connectors, providers, planner
   prompts, plan validation, GitHub, and Ollama.
 - Package install verification creates an external consumer project and imports

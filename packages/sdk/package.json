@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/sdk",
+  "name": "@agentosdev/sdk",
   "version": "0.1.0-alpha.1",
   "description": "Primary public SDK entry point for AgentOS.",
   "type": "module",
@@ -35,11 +35,11 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@agentos/connectors": "workspace:^",
-    "@agentos/core": "workspace:^",
-    "@agentos/memory": "workspace:^",
-    "@agentos/providers": "workspace:^",
-    "@agentos/types": "workspace:^"
+    "@agentosdev/connectors": "workspace:^",
+    "@agentosdev/core": "workspace:^",
+    "@agentosdev/memory": "workspace:^",
+    "@agentosdev/providers": "workspace:^",
+    "@agentosdev/types": "workspace:^"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",

@@ -8,7 +8,7 @@ import {
   createTask,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("connector bundle integration", () => {
   it("resolves and executes a bundled community tool", async () => {

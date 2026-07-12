@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/web",
+  "name": "@agentosdev/web",
   "version": "0.1.0-alpha.1",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentos/core": "workspace:^",
+    "@agentosdev/core": "workspace:^",
     "next": "^15.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

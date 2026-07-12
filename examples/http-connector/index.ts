@@ -8,7 +8,7 @@ import {
   type HttpFetch,
   type HttpResolveHost,
   type RegisteredTool,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const mockFetch: HttpFetch = async (input, init) => {
   const url = input.toString();

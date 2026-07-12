@@ -1,4 +1,4 @@
-import { CapabilityCategory } from "@agentos/types";
+import { CapabilityCategory } from "@agentosdev/types";
 import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 
 export function createAgentOSRegistryDiscoveryExample() {

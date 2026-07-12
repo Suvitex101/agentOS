@@ -1,13 +1,13 @@
-# @agentos/memory
+# @agentosdev/memory
 
 Provider-agnostic memory contracts and in-memory implementation for AgentOS.
 
-Most developers should import memory utilities from `@agentos/sdk`.
+Most developers should import memory utilities from `@agentosdev/sdk`.
 
 ## Install
 
 ```bash
-npm install @agentos/memory
+npm install @agentosdev/memory
 ```
 
 ## Purpose
@@ -21,9 +21,9 @@ This package provides:
 
 It does not include database storage, vector search, or embedding generation.
 
-## Relationship To @agentos/sdk
+## Relationship To @agentosdev/sdk
 
-`@agentos/sdk` re-exports `InMemoryMemoryStore` and memory types. Use this
+`@agentosdev/sdk` re-exports `InMemoryMemoryStore` and memory types. Use this
 package directly when building an alternative memory provider.
 
 ## Alpha Status

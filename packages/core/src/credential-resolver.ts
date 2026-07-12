@@ -8,7 +8,7 @@ import {
   type CredentialValidationResult,
   type CredentialResolver as CredentialResolverContract,
   type ResolvedCredential,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface CredentialResolverOptions {
   environment?: Record<string, string | undefined>;

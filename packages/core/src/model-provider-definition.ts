@@ -7,7 +7,7 @@ import {
   type ModelGenerationResponse,
   type ModelProvider,
   type ToolAuthor,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface ModelProviderGenerationContext {
   request: ModelGenerationRequest;

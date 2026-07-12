@@ -1,11 +1,11 @@
 # Public API Surface
 
-This document defines the intended `@agentos/sdk` public API for
+This document defines the intended `@agentosdev/sdk` public API for
 `0.1.0-alpha.1`.
 
 The SDK is the primary public entry point. It re-exports selected APIs from
-`@agentos/core`, `@agentos/types`, `@agentos/memory`, `@agentos/connectors`, and
-`@agentos/providers`.
+`@agentosdev/core`, `@agentosdev/types`, `@agentosdev/memory`, `@agentosdev/connectors`, and
+`@agentosdev/providers`.
 
 ## Agent Composition and Runtime
 
@@ -87,7 +87,7 @@ The SDK is the primary public entry point. It re-exports selected APIs from
 
 ## Types and Enums
 
-The SDK re-exports `@agentos/types`. Important public types include:
+The SDK re-exports `@agentosdev/types`. Important public types include:
 
 - `Agent`
 - `Task`
@@ -108,11 +108,11 @@ The SDK re-exports `@agentos/types`. Important public types include:
 
 ## Findings From the Surface Audit
 
-- README examples are aligned with `@agentos/sdk` as the public import path.
-- API reference exports are available from `@agentos/sdk`.
+- README examples are aligned with `@agentosdev/sdk` as the public import path.
+- API reference exports are available from `@agentosdev/sdk`.
 - The SDK intentionally re-exports broad type coverage during alpha to keep
   examples simple.
-- `@agentos/tools` remains private because it is currently a placeholder.
+- `@agentosdev/tools` remains private because it is currently a placeholder.
 - Internal implementation files are not exposed through package export maps.
 
 ## Known Alpha Concerns

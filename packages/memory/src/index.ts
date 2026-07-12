@@ -1,5 +1,5 @@
 export const agentOSMemory = {
-  name: "@agentos/memory",
+  name: "@agentosdev/memory",
   description: "Provider-agnostic memory interfaces and in-memory store for AgentOS.",
 } as const;
 
@@ -12,7 +12,7 @@ import {
   type MemoryQuery,
   type MemoryRecord,
   type MemoryScopeReference,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface MemoryWriteInput {
   id?: string;
@@ -314,5 +314,10 @@ function createMemoryError(code: string, message: string): AgentOSError {
   };
 }
 
-export type { MemoryPolicy, MemoryQuery, MemoryRecord, MemoryScopeReference } from "@agentos/types";
-export { MemoryScope, MemoryType } from "@agentos/types";
+export type {
+  MemoryPolicy,
+  MemoryQuery,
+  MemoryRecord,
+  MemoryScopeReference,
+} from "@agentosdev/types";
+export { MemoryScope, MemoryType } from "@agentosdev/types";

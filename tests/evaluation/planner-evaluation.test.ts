@@ -9,7 +9,7 @@ import {
   type Agent,
   type ExecutionContext,
   type ModelProvider,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import { plannerEvaluationFixtures } from "./fixtures/planner-fixtures";
 
 describe("planner evaluation fixtures", () => {

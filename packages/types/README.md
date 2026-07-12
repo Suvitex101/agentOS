@@ -1,13 +1,13 @@
-# @agentos/types
+# @agentosdev/types
 
 Shared TypeScript domain types for AgentOS.
 
-Most developers should import these through `@agentos/sdk`.
+Most developers should import these through `@agentosdev/sdk`.
 
 ## Install
 
 ```bash
-npm install @agentos/types
+npm install @agentosdev/types
 ```
 
 ## Purpose
@@ -30,9 +30,9 @@ This package defines the shared vocabulary used across AgentOS:
 - security policy types
 - model provider types
 
-## Relationship To @agentos/sdk
+## Relationship To @agentosdev/sdk
 
-`@agentos/sdk` re-exports these types for convenience. Direct installation is
+`@agentosdev/sdk` re-exports these types for convenience. Direct installation is
 mainly useful for package authors who want type-only dependencies.
 
 ## Alpha Status

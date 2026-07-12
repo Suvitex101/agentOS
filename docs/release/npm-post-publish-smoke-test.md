@@ -17,7 +17,7 @@ It does not publish, tag, or modify the repository.
 mkdir -p /tmp/agentos-alpha-smoke
 cd /tmp/agentos-alpha-smoke
 npm init -y
-npm install @agentos/sdk@alpha
+npm install @agentosdev/sdk@alpha
 cat > index.mjs <<'EOF'
 import {
   AgentOSRegistry,
@@ -25,7 +25,7 @@ import {
   RuleBasedPlanner,
   SimpleExecutionEngine,
   defineAgent,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const agent = defineAgent({
   id: "smoke-agent",
@@ -51,12 +51,12 @@ node index.mjs
 
 ## Expected Result
 
-The script should import from `@agentos/sdk`, create an agent, run a
+The script should import from `@agentosdev/sdk`, create an agent, run a
 deterministic task, and print `AgentOS npm smoke test passed.`
 
 ## If It Fails
 
-- Confirm `@agentos/sdk@alpha` resolves to `0.1.0-alpha.1`.
-- Confirm dependent `@agentos/*` packages were published first.
+- Confirm `@agentosdev/sdk@alpha` resolves to `0.1.0-alpha.1`.
+- Confirm dependent `@agentosdev/*` packages were published first.
 - Confirm package export maps point to `dist/index.js` and `dist/index.d.ts`.
 - Confirm no package still contains `workspace:` dependency specifiers.

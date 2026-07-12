@@ -9,7 +9,7 @@ import {
   defineResearchTool,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const grantPlanTool = defineResearchTool<{ text: string }, { plan: string; priorities: string[] }>({
   id: "tool-grant-research-plan",

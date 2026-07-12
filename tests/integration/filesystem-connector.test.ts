@@ -12,7 +12,7 @@ import {
   type Agent,
   type ExecutionContext,
   type WriteFileOutput,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("FilesystemConnector integration", () => {
   let workspaceRoot: string;

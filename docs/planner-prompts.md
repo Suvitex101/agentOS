@@ -34,7 +34,7 @@ They expose:
 - `buildRepairPrompt()`
 - `createPlannerPromptMetadata()`
 
-The assets are exported through `@agentos/sdk`.
+The assets are exported through `@agentosdev/sdk`.
 
 ## Versioning
 

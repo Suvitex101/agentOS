@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/tools",
+  "name": "@agentosdev/tools",
   "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Internal placeholder package for future AgentOS tool helpers.",

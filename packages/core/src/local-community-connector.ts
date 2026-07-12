@@ -3,7 +3,7 @@ import {
   ResourceType,
   type Capability,
   type RegisteredTool,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { defineConnector } from "./connector-definition";
 import { createMockTools } from "./mock-tools";
 

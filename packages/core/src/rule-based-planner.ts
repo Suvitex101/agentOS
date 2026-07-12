@@ -14,7 +14,7 @@ import {
   type PlanValidationResult,
   type RuleBasedPlannerStrategy,
   type Task,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 type RuleMatch = "analysis" | "message" | "payment" | "default";
 

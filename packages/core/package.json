@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/core",
+  "name": "@agentosdev/core",
   "version": "0.1.0-alpha.1",
   "description": "Core planners, execution engine, registry, and authoring APIs for AgentOS.",
   "type": "module",
@@ -35,8 +35,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@agentos/memory": "workspace:^",
-    "@agentos/types": "workspace:^"
+    "@agentosdev/memory": "workspace:^",
+    "@agentosdev/types": "workspace:^"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",

@@ -13,7 +13,7 @@ import {
   defineModelProvider,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const agent: Agent = {
   id: "plan-validation-agent",

@@ -15,7 +15,7 @@ import {
   createOpenAICompatibleProvider,
   defineAgent,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const LIVE_FLAG = "--live";
 const TASK = "Summarize README.md into SUMMARY.md";

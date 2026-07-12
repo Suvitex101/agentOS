@@ -14,7 +14,7 @@ import {
   type Agent,
   type ExecutionContext,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

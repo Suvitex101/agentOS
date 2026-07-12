@@ -1,4 +1,4 @@
 export const agentOSTools = {
-  name: "@agentos/tools",
+  name: "@agentosdev/tools",
   description: "Placeholder for future AgentOS tool definitions.",
 } as const;

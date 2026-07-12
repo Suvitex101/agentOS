@@ -12,7 +12,7 @@ configuration.
 Use a GitHub Personal Access Token through the Credential SDK:
 
 ```ts
-import { CredentialType, createGitHubConnector } from "@agentos/sdk";
+import { CredentialType, createGitHubConnector } from "@agentosdev/sdk";
 
 const github = createGitHubConnector({
   credential: {
@@ -65,7 +65,7 @@ registry policy rejects them until an approval workflow exists.
 ## Registration
 
 ```ts
-import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentos/sdk";
+import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const github = createGitHubConnector({

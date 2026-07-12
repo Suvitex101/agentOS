@@ -7,7 +7,7 @@ import {
   ModelProviderResolver,
   defineModelProvider,
   type ModelProvider,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 function createReasoningProvider(id = "reasoning-provider") {
   return defineModelProvider({

@@ -4,7 +4,7 @@ import {
   redactCredentialReference,
   redactMetadata,
   redactSecretValue,
-} from "@agentos/core";
+} from "@agentosdev/core";
 import {
   CredentialType,
   ModelFinishReason,
@@ -17,10 +17,10 @@ import {
   type ModelGenerationRequest,
   type ModelGenerationResponse,
   type ModelUsage,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export const agentOSProviders = {
-  name: "@agentos/providers",
+  name: "@agentosdev/providers",
   description: "Provider-agnostic model provider foundations for AgentOS.",
 } as const;
 

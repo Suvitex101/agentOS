@@ -49,13 +49,13 @@ import {
   SimpleExecutionEngine,
   createAgentOSRegistryBootstrapExample,
   defineAgent
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const registry = createAgentOSRegistryBootstrapExample();
 const agent = defineAgent({
   id: "external-consumer-agent",
   name: "External Consumer Agent",
-  description: "Verifies @agentos/sdk outside the monorepo.",
+  description: "Verifies @agentosdev/sdk outside the monorepo.",
   planner: new RuleBasedPlanner(),
   executionEngine: new SimpleExecutionEngine(),
   registry,

@@ -1,4 +1,4 @@
-import { InMemoryMemoryStore } from "@agentos/memory";
+import { InMemoryMemoryStore } from "@agentosdev/memory";
 import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 import { defineAgent } from "./agent-definition";
 import { RuleBasedPlanner } from "./rule-based-planner";

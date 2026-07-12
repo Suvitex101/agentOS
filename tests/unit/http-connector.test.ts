@@ -15,7 +15,7 @@ import {
   type HttpResolveHost,
   type HttpGetOutput,
   type RegisteredTool,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 function createContext(registry: AgentOSRegistry): ExecutionContext {
   const agent: Agent = {

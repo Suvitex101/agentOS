@@ -53,7 +53,7 @@ be used in production examples, public source code, or deployed systems.
 ## CredentialResolver
 
 ```ts
-import { CredentialResolver, CredentialType } from "@agentos/sdk";
+import { CredentialResolver, CredentialType } from "@agentosdev/sdk";
 
 const resolver = new CredentialResolver({
   environment: process.env,
@@ -81,7 +81,7 @@ only and do not copy it into definitions, metadata, traces, logs, or errors.
 `HTTPModelProviderBase` accepts a credential reference and resolver:
 
 ```ts
-import { CredentialResolver, CredentialType, HTTPModelProviderBase } from "@agentos/sdk";
+import { CredentialResolver, CredentialType, HTTPModelProviderBase } from "@agentosdev/sdk";
 
 const transport = new HTTPModelProviderBase({
   baseUrl: "https://api.example.com",

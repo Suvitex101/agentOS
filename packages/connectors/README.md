@@ -1,13 +1,13 @@
-# @agentos/connectors
+# @agentosdev/connectors
 
 Connector implementations for AgentOS.
 
-Most developers should import connectors from `@agentos/sdk`.
+Most developers should import connectors from `@agentosdev/sdk`.
 
 ## Install
 
 ```bash
-npm install @agentos/connectors
+npm install @agentosdev/connectors
 ```
 
 ## Purpose
@@ -21,9 +21,9 @@ This package currently provides:
 Connectors are packaged as bundles that register capabilities, tools, and
 resources with `AgentOSRegistry`.
 
-## Relationship To @agentos/sdk
+## Relationship To @agentosdev/sdk
 
-`@agentos/sdk` re-exports the public connector factories. Use this package
+`@agentosdev/sdk` re-exports the public connector factories. Use this package
 directly when building or testing connector-specific integrations.
 
 ## Alpha Status

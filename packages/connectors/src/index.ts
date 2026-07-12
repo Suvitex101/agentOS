@@ -9,7 +9,7 @@ import {
   type ConnectorDefinition,
   type CredentialResolverOptions,
   type ToolDefinition,
-} from "@agentos/core";
+} from "@agentosdev/core";
 import {
   CapabilityCategory,
   ConnectorAuthType,
@@ -22,10 +22,10 @@ import {
   type AgentOSError,
   type CredentialReference,
   type ToolExecutionResult,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export const agentOSConnectors = {
-  name: "@agentos/connectors",
+  name: "@agentosdev/connectors",
   description: "Provider-agnostic connector package for AgentOS.",
 } as const;
 

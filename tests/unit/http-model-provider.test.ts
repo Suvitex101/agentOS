@@ -14,7 +14,7 @@ import {
   type AgentOSError,
   type ExecutionContext,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const successBody = {
   id: "chatcmpl-test",

@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/config",
+  "name": "@agentosdev/config",
   "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Internal shared development configuration for AgentOS.",

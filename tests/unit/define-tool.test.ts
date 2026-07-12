@@ -6,7 +6,7 @@ import {
   defineMessagingTool,
   defineTool,
   validateToolDefinitionConfig,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("defineTool", () => {
   it("validates required fields and semantic version format", () => {

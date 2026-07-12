@@ -74,7 +74,7 @@ requests to provider request bodies and maps provider responses back to
 base and an OpenAI-compatible chat-completions adapter.
 
 ```ts
-import { HTTPModelProviderBase, createOpenAICompatibleProvider } from "@agentos/sdk";
+import { HTTPModelProviderBase, createOpenAICompatibleProvider } from "@agentosdev/sdk";
 
 const transport = new HTTPModelProviderBase({
   baseUrl: "https://api.example.com",
@@ -98,7 +98,7 @@ The credential is resolved only at request time and is applied as an
 authorization header by default.
 
 ```ts
-import { CredentialResolver, CredentialType, HTTPModelProviderBase } from "@agentos/sdk";
+import { CredentialResolver, CredentialType, HTTPModelProviderBase } from "@agentosdev/sdk";
 
 const transport = new HTTPModelProviderBase({
   baseUrl: "https://api.example.com",

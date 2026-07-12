@@ -4,7 +4,7 @@ import {
   type AgentOSMetadata,
   type Task,
   type TaskSource,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export { RuleBasedPlanner } from "./rule-based-planner";
 export type { RuleBasedPlannerOptions } from "./rule-based-planner";
@@ -115,7 +115,7 @@ export type {
 } from "./agent-definition";
 
 export const agentOSCore = {
-  name: "@agentos/core",
+  name: "@agentosdev/core",
   description: "Minimal core helpers for AgentOS domain objects.",
 } as const;
 
@@ -145,4 +145,4 @@ export function createTask(input: CreateTaskInput): Task {
   };
 }
 
-export type * from "@agentos/types";
+export type * from "@agentosdev/types";

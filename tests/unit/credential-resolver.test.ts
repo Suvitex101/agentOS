@@ -6,7 +6,7 @@ import {
   redactMetadata,
   redactSecretValue,
   validateCredentialReference,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("CredentialResolver", () => {
   it("resolves environment credentials without exposing the value in the reference", () => {

@@ -52,7 +52,7 @@ ecosystem, database-backed memory, or dashboard functionality.
 - [Release Package Strategy](docs/release/package-strategy.md): alpha package
   decisions and publishability audit.
 - [Public API Surface](docs/release/public-api-surface.md): intended
-  `@agentos/sdk` alpha exports.
+  `@agentosdev/sdk` alpha exports.
 - [Changelog](CHANGELOG.md): release history and alpha candidate notes.
 - [Examples](examples): runnable local examples.
 - [Grant Readiness Docs](docs/grant): supporting material for grant review.
@@ -246,7 +246,7 @@ pnpm test:examples
 Tools are local callable capabilities. Define one with `defineTool()`:
 
 ```ts
-import { defineTool } from "@agentos/sdk";
+import { defineTool } from "@agentosdev/sdk";
 
 export const summarizeMessages = defineTool<{ messages: string[] }, string>({
   id: "summarize-messages",
@@ -295,7 +295,7 @@ Connector -> Capability -> Tool
 Define one with `defineConnector()`:
 
 ```ts
-import { defineConnector } from "@agentos/sdk";
+import { defineConnector } from "@agentosdev/sdk";
 import { summarizeMessages, prepareMessage } from "./tools";
 
 export const discord = defineConnector({
@@ -350,7 +350,7 @@ Bundles exist so developers can install and remove a connector consistently
 without manually registering each capability, tool, and resource.
 
 ```ts
-import { AgentOSRegistry, LocalCommunityConnector } from "@agentos/sdk";
+import { AgentOSRegistry, LocalCommunityConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 
@@ -400,7 +400,7 @@ file access. It can list, read, write, and search files inside an explicitly
 configured `workspaceRoot`.
 
 ```ts
-import { AgentOSRegistry, createFilesystemConnector } from "@agentos/sdk";
+import { AgentOSRegistry, createFilesystemConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const filesystemConnector = createFilesystemConnector({
@@ -445,7 +445,7 @@ GET requests. It exposes network access through `HttpGetTool`, not through the
 execution engine.
 
 ```ts
-import { AgentOSRegistry, createHttpConnector } from "@agentos/sdk";
+import { AgentOSRegistry, createHttpConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const httpConnector = createHttpConnector({
@@ -479,7 +479,7 @@ Connector SDK and Credential SDK. It exposes repository, source-code, issues,
 and search capabilities through tools.
 
 ```ts
-import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentos/sdk";
+import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const githubConnector = createGitHubConnector({
@@ -512,7 +512,7 @@ engines. The API uses familiar model-provider terminology, but the architecture
 keeps providers separate from planners so AgentOS does not become model-centric.
 
 ```ts
-import { defineModelProvider } from "@agentos/sdk";
+import { defineModelProvider } from "@agentosdev/sdk";
 
 const provider = defineModelProvider({
   id: "mock",
@@ -547,7 +547,7 @@ See [docs/model-provider-sdk.md](docs/model-provider-sdk.md).
 `/api/generate` endpoint.
 
 ```ts
-import { AgentOSRegistry, createOllamaProvider } from "@agentos/sdk";
+import { AgentOSRegistry, createOllamaProvider } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 const provider = createOllamaProvider({
@@ -591,7 +591,7 @@ AgentOS components can reference credentials without embedding secret values in
 definitions, metadata, traces, logs, or source code.
 
 ```ts
-import { CredentialResolver, CredentialType } from "@agentos/sdk";
+import { CredentialResolver, CredentialType } from "@agentosdev/sdk";
 
 const resolver = new CredentialResolver();
 const result = resolver.resolve({
@@ -656,7 +656,7 @@ Register providers with `registerModelProvider()` and resolve them through
 `ModelProviderResolver`.
 
 ```ts
-import { AgentOSRegistry, MockModelProvider, ModelProviderResolver } from "@agentos/sdk";
+import { AgentOSRegistry, MockModelProvider, ModelProviderResolver } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 
@@ -682,7 +682,7 @@ as untrusted JSON. AgentOS creates ids, timestamps, task ids, statuses, and plan
 metadata itself.
 
 ```ts
-import { ModelAssistedPlanner, ModelProviderResolver, RuleBasedPlanner } from "@agentos/sdk";
+import { ModelAssistedPlanner, ModelProviderResolver, RuleBasedPlanner } from "@agentosdev/sdk";
 
 const planner = new ModelAssistedPlanner({
   providerResolver: new ModelProviderResolver({ registry }),
@@ -705,7 +705,7 @@ import {
   SimpleExecutionEngine,
   createAgentOSRegistryBootstrapExample,
   defineAgent,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const agent = defineAgent({
   id: "community-manager",
@@ -786,7 +786,7 @@ pnpm release:check
 
 `pnpm test:package-install` builds the publishable packages, packs local
 tarballs, installs them into a temporary project outside the monorepo, imports
-from `@agentos/sdk`, and runs a deterministic agent workflow.
+from `@agentosdev/sdk`, and runs a deterministic agent workflow.
 
 See [docs/release/package-strategy.md](docs/release/package-strategy.md),
 [docs/release/public-api-surface.md](docs/release/public-api-surface.md), and

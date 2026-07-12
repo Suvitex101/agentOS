@@ -1,4 +1,4 @@
-import { InMemoryMemoryStore, MemoryScope } from "@agentos/sdk";
+import { InMemoryMemoryStore, MemoryScope } from "@agentosdev/sdk";
 import { createExampleAgent, printRun } from "../shared";
 
 const firstTask = "Summarize AgentOS as an open-source AI agent infrastructure project for Africa.";

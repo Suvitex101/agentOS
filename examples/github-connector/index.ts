@@ -10,7 +10,7 @@ import {
   type ExecutionContext,
   type GitHubFetch,
   type GitHubRepositoryOutput,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const mockedGitHubFetch: GitHubFetch = async (input, init) => {
   const url = String(input);

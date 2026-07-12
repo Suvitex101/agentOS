@@ -9,7 +9,7 @@ import {
   defineModelProvider,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const structuredProvider = defineModelProvider({
   id: "structured-prompt-provider",

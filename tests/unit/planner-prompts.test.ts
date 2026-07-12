@@ -9,7 +9,7 @@ import {
   buildPlanningPrompt,
   buildRepairPrompt,
   defineModelProvider,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import { createTestAgent, createTestTask } from "../helpers/test-helpers";
 
 function createProvider(capabilities: string[]) {

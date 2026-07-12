@@ -20,7 +20,7 @@ import {
   type PlanValidationIssue,
   type PlanValidationResult,
   type Task,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { ModelProviderResolver } from "./model-provider-resolver";
 import { PlanValidator } from "./plan-validator";
 import { buildPlanningPrompt, buildRepairPrompt } from "./planner-prompts";

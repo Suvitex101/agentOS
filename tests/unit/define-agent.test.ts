@@ -3,7 +3,7 @@ import {
   AgentDefinitionValidationError,
   defineAgent,
   validateAgentDefinitionConfig,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import {
   createTestAgent,
   createTestExecutionEngine,

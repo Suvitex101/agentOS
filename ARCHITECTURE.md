@@ -244,7 +244,7 @@ These are local and deterministic.
 Developers define tools with `defineTool()`.
 
 ```ts
-import { defineTool } from "@agentos/sdk";
+import { defineTool } from "@agentosdev/sdk";
 
 export const sentimentTool = defineTool({
   id: "sentiment-demo",

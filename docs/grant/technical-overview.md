@@ -8,13 +8,13 @@ grant review. It reflects the repository as implemented today.
 AgentOS is a pnpm/Turborepo monorepo written in TypeScript. The main packages
 are:
 
-- `@agentos/types`: shared domain and architecture types
-- `@agentos/core`: planner, execution engine, registry, tool and connector
+- `@agentosdev/types`: shared domain and architecture types
+- `@agentosdev/core`: planner, execution engine, registry, tool and connector
   authoring helpers, runtime composition, and local connector bundle
-- `@agentos/memory`: memory store contract and in-memory implementation
-- `@agentos/sdk`: developer-facing exports
-- `@agentos/config`: shared TypeScript configuration
-- `@agentos/tools` and `@agentos/connectors`: placeholder packages for future
+- `@agentosdev/memory`: memory store contract and in-memory implementation
+- `@agentosdev/sdk`: developer-facing exports
+- `@agentosdev/config`: shared TypeScript configuration
+- `@agentosdev/tools` and `@agentosdev/connectors`: placeholder packages for future
   package-specific expansion
 - `apps/web`: a minimal Next.js shell for future dashboard work
 

@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/types",
+  "name": "@agentosdev/types",
   "version": "0.1.0-alpha.1",
   "description": "Shared TypeScript domain types for AgentOS.",
   "type": "module",

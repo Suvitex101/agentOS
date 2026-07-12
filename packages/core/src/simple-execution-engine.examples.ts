@@ -7,7 +7,7 @@ import {
   type Plan,
   type Result,
   type Task,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { createTask } from "./index";
 import { createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 import { RuleBasedPlanner } from "./rule-based-planner";

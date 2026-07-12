@@ -2,56 +2,56 @@ export const alphaVersion = "0.1.0-alpha.1";
 
 export const publishablePackages = [
   {
-    name: "@agentos/types",
+    name: "@agentosdev/types",
     directory: "packages/types",
-    tarballPrefix: "agentos-types",
+    tarballPrefix: "agentosdev-types",
     decision: "publishable now",
   },
   {
-    name: "@agentos/memory",
+    name: "@agentosdev/memory",
     directory: "packages/memory",
-    tarballPrefix: "agentos-memory",
+    tarballPrefix: "agentosdev-memory",
     decision: "publishable now",
   },
   {
-    name: "@agentos/core",
+    name: "@agentosdev/core",
     directory: "packages/core",
-    tarballPrefix: "agentos-core",
+    tarballPrefix: "agentosdev-core",
     decision: "publishable now",
   },
   {
-    name: "@agentos/providers",
+    name: "@agentosdev/providers",
     directory: "packages/providers",
-    tarballPrefix: "agentos-providers",
+    tarballPrefix: "agentosdev-providers",
     decision: "publishable now",
   },
   {
-    name: "@agentos/connectors",
+    name: "@agentosdev/connectors",
     directory: "packages/connectors",
-    tarballPrefix: "agentos-connectors",
+    tarballPrefix: "agentosdev-connectors",
     decision: "publishable now",
   },
   {
-    name: "@agentos/sdk",
+    name: "@agentosdev/sdk",
     directory: "packages/sdk",
-    tarballPrefix: "agentos-sdk",
+    tarballPrefix: "agentosdev-sdk",
     decision: "primary public entry point",
   },
 ];
 
 export const privatePackages = [
   {
-    name: "@agentos/tools",
+    name: "@agentosdev/tools",
     directory: "packages/tools",
     decision: "placeholder package; keep private until real public tool helpers exist",
   },
   {
-    name: "@agentos/config",
+    name: "@agentosdev/config",
     directory: "packages/config",
     decision: "internal development configuration; keep private",
   },
   {
-    name: "@agentos/web",
+    name: "@agentosdev/web",
     directory: "apps/web",
     decision: "future dashboard app; not an npm package",
   },

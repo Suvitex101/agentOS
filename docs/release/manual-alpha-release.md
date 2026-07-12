@@ -30,16 +30,16 @@ pnpm test:package-install
 Publish packages in dependency-aware order:
 
 ```text
-1. @agentos/types
-2. @agentos/memory
-3. @agentos/core
-4. @agentos/providers
-5. @agentos/connectors
-6. @agentos/sdk
+1. @agentosdev/types
+2. @agentosdev/memory
+3. @agentosdev/core
+4. @agentosdev/providers
+5. @agentosdev/connectors
+6. @agentosdev/sdk
 ```
 
-`@agentos/core` depends on `@agentos/memory`, so memory must be published before
-core. `@agentos/sdk` should be published last because it is the public aggregate
+`@agentosdev/core` depends on `@agentosdev/memory`, so memory must be published before
+core. `@agentosdev/sdk` should be published last because it is the public aggregate
 entry point.
 
 ## Manual npm Publish Commands
@@ -57,9 +57,9 @@ pnpm --dir packages/sdk publish --access public --tag alpha
 
 Do not publish private packages:
 
-- `@agentos/tools`
-- `@agentos/config`
-- `@agentos/web`
+- `@agentosdev/tools`
+- `@agentosdev/config`
+- `@agentosdev/web`
 
 ## Post-Publish Verification
 
@@ -72,8 +72,8 @@ open docs/release/npm-post-publish-smoke-test.md
 Then verify npm metadata:
 
 ```bash
-npm view @agentos/sdk@alpha version
-npm view @agentos/sdk@alpha dist-tags
+npm view @agentosdev/sdk@alpha version
+npm view @agentosdev/sdk@alpha dist-tags
 ```
 
 ## Stop Conditions

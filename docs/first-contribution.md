@@ -55,7 +55,7 @@ For a deeper explanation, read [../ARCHITECTURE.md](../ARCHITECTURE.md).
 Tools are defined with `defineTool()`.
 
 ```ts
-import { defineTool } from "@agentos/sdk";
+import { defineTool } from "@agentosdev/sdk";
 
 export const helloTool = defineTool<{ name: string }, string>({
   id: "hello-tool",

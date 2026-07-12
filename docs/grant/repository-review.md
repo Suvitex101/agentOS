@@ -14,7 +14,7 @@ trace, and result.
 
 ### Strong TypeScript Foundation
 
-The shared `@agentos/types` package gives the project a clear vocabulary. This
+The shared `@agentosdev/types` package gives the project a clear vocabulary. This
 is useful for contributors and for future provider implementations.
 
 ### Local End-To-End Runtime Exists
@@ -131,7 +131,7 @@ manual registration versus bundle registration.
 ## High-Priority Improvements
 
 1. Add an open-source license.
-2. Create API reference documentation for `@agentos/sdk`.
+2. Create API reference documentation for `@agentosdev/sdk`.
 3. Clarify connector definition versus connector bundle in docs and types.
 4. Define the LLM provider abstraction without making LLMs central.
 5. Move toward at least one durable memory adapter or explicit adapter contract.

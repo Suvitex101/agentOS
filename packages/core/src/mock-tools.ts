@@ -3,7 +3,7 @@ import {
   ToolPermissionLevel,
   type AgentOSError,
   type ToolExecutionResult,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { defineBusinessTool, defineMessagingTool, defineResearchTool } from "./tool-definition";
 
 type MockToolInput = Record<string, unknown>;

@@ -10,7 +10,7 @@ import {
   type PlanValidationIssue,
   type RegisteredTool,
   type Task,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export const PLANNER_PROMPT_VERSION = PlannerPromptVersion.V1;
 

@@ -9,7 +9,7 @@ import {
   type Agent,
   type ExecutionContext,
   type RegisteredTool,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 async function main() {
   const workspaceRoot = await mkdtemp(path.join(tmpdir(), "agentos-filesystem-"));

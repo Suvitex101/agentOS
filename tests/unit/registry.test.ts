@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CapabilityCategory } from "@agentos/sdk";
+import { CapabilityCategory } from "@agentosdev/sdk";
 import { createTestRegistry } from "../helpers/test-helpers";
 
 describe("AgentOSRegistry", () => {

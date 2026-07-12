@@ -38,7 +38,7 @@ deployment.
 After publication:
 
 ```bash
-npm install @agentos/sdk@alpha
+npm install @agentosdev/sdk@alpha
 ```
 
 ## Minimal Example
@@ -50,7 +50,7 @@ import {
   RuleBasedPlanner,
   SimpleExecutionEngine,
   defineAgent,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const agent = defineAgent({
   id: "community-manager",

@@ -9,7 +9,7 @@ import {
   type Agent,
   type ExecutionContext,
   type HTTPModelProviderFetch,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const mockedFetch: HTTPModelProviderFetch = async () =>
   new Response(

@@ -1,4 +1,4 @@
-import { EchoModelProvider, MockModelProvider, defineModelProvider } from "@agentos/sdk";
+import { EchoModelProvider, MockModelProvider, defineModelProvider } from "@agentosdev/sdk";
 
 async function main() {
   const customProvider = defineModelProvider({

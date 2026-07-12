@@ -21,8 +21,8 @@ import {
   type Result,
   type Task,
   type TaskSource,
-} from "@agentos/types";
-import type { MemoryStore } from "@agentos/memory";
+} from "@agentosdev/types";
+import type { MemoryStore } from "@agentosdev/memory";
 import type { AgentOSRegistry } from "./agentos-registry";
 import { ToolResolver } from "./tool-resolver";
 

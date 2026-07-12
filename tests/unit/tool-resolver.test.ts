@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AgentOSRegistry, ToolResolver } from "@agentos/sdk";
+import { AgentOSRegistry, ToolResolver } from "@agentosdev/sdk";
 import { createTestRegistry } from "../helpers/test-helpers";
 
 describe("ToolResolver", () => {

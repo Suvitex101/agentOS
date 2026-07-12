@@ -8,7 +8,7 @@ import {
   type AgentDefinition,
   type AgentOSMetadata,
   type Result,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 interface ExampleAgentInput {
   id: string;

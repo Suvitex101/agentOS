@@ -6,7 +6,7 @@ import {
   PlanStepType,
   PlanValidator,
   type Plan,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 function createValidPlan(overrides: Partial<Plan> = {}): Plan {
   const now = new Date();

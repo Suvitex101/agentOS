@@ -1,11 +1,11 @@
 # Package Strategy
 
-AgentOS uses `@agentos/sdk` as the primary public entry point.
+AgentOS uses `@agentosdev/sdk` as the primary public entry point.
 
 Most developers should start with:
 
 ```bash
-npm install @agentos/sdk
+npm install @agentosdev/sdk
 ```
 
 The SDK re-exports the stable alpha surface from the modular packages so
@@ -14,17 +14,17 @@ their first local agent.
 
 ## Package Decisions
 
-| Package               | Decision        | Reason                                                                                            |
-| --------------------- | --------------- | ------------------------------------------------------------------------------------------------- |
-| `@agentos/sdk`        | Publishable now | Primary public entry point for alpha developers.                                                  |
-| `@agentos/core`       | Publishable now | Required runtime, registry, planner, resolver, and authoring APIs used by SDK.                    |
-| `@agentos/types`      | Publishable now | Shared domain types required by all public packages.                                              |
-| `@agentos/memory`     | Publishable now | Provides public memory contracts and in-memory implementation used by SDK.                        |
-| `@agentos/connectors` | Publishable now | Provides Filesystem, HTTP, and GitHub connectors exposed through SDK.                             |
-| `@agentos/providers`  | Publishable now | Provides provider foundation, OpenAI-compatible adapter, and Ollama provider exposed through SDK. |
-| `@agentos/tools`      | Private         | Placeholder package; not enough public behavior to publish honestly.                              |
-| `@agentos/config`     | Private         | Internal shared TypeScript configuration, not a runtime package.                                  |
-| `@agentos/web`        | Private         | Future dashboard app, not a public npm package.                                                   |
+| Package                  | Decision        | Reason                                                                                            |
+| ------------------------ | --------------- | ------------------------------------------------------------------------------------------------- |
+| `@agentosdev/sdk`        | Publishable now | Primary public entry point for alpha developers.                                                  |
+| `@agentosdev/core`       | Publishable now | Required runtime, registry, planner, resolver, and authoring APIs used by SDK.                    |
+| `@agentosdev/types`      | Publishable now | Shared domain types required by all public packages.                                              |
+| `@agentosdev/memory`     | Publishable now | Provides public memory contracts and in-memory implementation used by SDK.                        |
+| `@agentosdev/connectors` | Publishable now | Provides Filesystem, HTTP, and GitHub connectors exposed through SDK.                             |
+| `@agentosdev/providers`  | Publishable now | Provides provider foundation, OpenAI-compatible adapter, and Ollama provider exposed through SDK. |
+| `@agentosdev/tools`      | Private         | Placeholder package; not enough public behavior to publish honestly.                              |
+| `@agentosdev/config`     | Private         | Internal shared TypeScript configuration, not a runtime package.                                  |
+| `@agentosdev/web`        | Private         | Future dashboard app, not a public npm package.                                                   |
 
 ## Versioning
 
@@ -70,5 +70,5 @@ call out any API changes clearly.
 ## Future Modular Packages
 
 Advanced users may eventually install modular packages directly, such as
-`@agentos/connectors` or `@agentos/providers`. For the first public alpha,
-`@agentos/sdk` remains the recommended path.
+`@agentosdev/connectors` or `@agentosdev/providers`. For the first public alpha,
+`@agentosdev/sdk` remains the recommended path.

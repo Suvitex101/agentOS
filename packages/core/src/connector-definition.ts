@@ -16,7 +16,7 @@ import {
   type Resource,
   type ResourceType,
   type ToolAuthor,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface ConnectorHealthCheckResult {
   healthy: boolean;

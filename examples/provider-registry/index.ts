@@ -5,7 +5,7 @@ import {
   ModelProviderCapability,
   ModelProviderResolver,
   defineModelProvider,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 async function main() {
   const registry = new AgentOSRegistry();

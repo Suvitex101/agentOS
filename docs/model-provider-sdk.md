@@ -31,7 +31,7 @@ Keeping providers separate from planners means:
 ## Define A Provider
 
 ```ts
-import { defineModelProvider } from "@agentos/sdk";
+import { defineModelProvider } from "@agentosdev/sdk";
 
 const provider = defineModelProvider({
   id: "mock",
@@ -109,7 +109,7 @@ Provider adapters own request and response mapping. The first adapter is
 OpenAI-compatible chat-completions shape.
 
 ```ts
-import { HTTPModelProviderBase, createOpenAICompatibleProvider } from "@agentos/sdk";
+import { HTTPModelProviderBase, createOpenAICompatibleProvider } from "@agentosdev/sdk";
 
 const transport = new HTTPModelProviderBase({
   baseUrl: "https://api.example.com",
@@ -145,7 +145,7 @@ Credentials remain references until request time. See
 `/api/generate` endpoint.
 
 ```ts
-import { createOllamaProvider } from "@agentos/sdk";
+import { createOllamaProvider } from "@agentosdev/sdk";
 
 const provider = createOllamaProvider({
   model: "llama3.1",
@@ -205,7 +205,7 @@ without changing the core type model.
 Model providers can be registered with the AgentOS Registry:
 
 ```ts
-import { AgentOSRegistry, MockModelProvider } from "@agentos/sdk";
+import { AgentOSRegistry, MockModelProvider } from "@agentosdev/sdk";
 
 const registry = new AgentOSRegistry();
 
@@ -228,7 +228,7 @@ Registry support includes:
 `ModelProviderResolver` is the lookup boundary for providers:
 
 ```ts
-import { ModelProviderCapability, ModelProviderResolver } from "@agentos/sdk";
+import { ModelProviderCapability, ModelProviderResolver } from "@agentosdev/sdk";
 
 const resolver = new ModelProviderResolver({ registry });
 

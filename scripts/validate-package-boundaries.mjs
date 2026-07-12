@@ -31,7 +31,7 @@ for (const pkg of publishablePackages) {
   );
 
   for (const [dependencyName, specifier] of Object.entries(manifest.dependencies ?? {})) {
-    if (dependencyName.startsWith("@agentos/")) {
+    if (dependencyName.startsWith("@agentosdev/")) {
       expect(
         specifier === "workspace:^",
         `${pkg.name} should use workspace:^ for ${dependencyName}`

@@ -10,7 +10,7 @@ import {
   defineTool,
   type Agent,
   type ExecutionContext,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const sentimentTool = defineTool<{ text: string }, { sentiment: string; confidence: number }>({
   id: "tool-sentiment-demo",

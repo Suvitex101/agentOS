@@ -11,7 +11,7 @@ import {
   defineTool,
   type ConnectorDefinition,
   type ConnectorSecurityProfile,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 function createPolicyTool(id: string) {
   return defineTool({

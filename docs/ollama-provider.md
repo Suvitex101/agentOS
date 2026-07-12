@@ -29,7 +29,7 @@ http://localhost:11434
 ## Configuration
 
 ```ts
-import { createOllamaProvider } from "@agentos/sdk";
+import { createOllamaProvider } from "@agentosdev/sdk";
 
 const provider = createOllamaProvider({
   model: "llama3.1",

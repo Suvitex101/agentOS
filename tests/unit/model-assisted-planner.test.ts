@@ -7,7 +7,7 @@ import {
   RuleBasedPlanner,
   defineModelProvider,
   type ModelProvider,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import { createExecutionContext, createTestAgent, createTestTask } from "../helpers/test-helpers";
 
 function createProvider(

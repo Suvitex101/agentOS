@@ -16,7 +16,7 @@ import {
   type ListFilesOutput,
   type ReadFileOutput,
   type SearchFilesOutput,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 describe("FilesystemConnector", () => {
   let workspaceRoot: string;

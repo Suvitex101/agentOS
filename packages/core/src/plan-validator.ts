@@ -5,7 +5,7 @@ import {
   type AgentOSMetadata,
   type PlanValidationIssue,
   type PlanValidationResult,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { redactMetadata, redactSecretValue } from "./credential-resolver";
 
 export interface PlanValidatorOptions {

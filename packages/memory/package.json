@@ -1,5 +1,5 @@
 {
-  "name": "@agentos/memory",
+  "name": "@agentosdev/memory",
   "version": "0.1.0-alpha.1",
   "description": "Provider-agnostic memory store contracts and in-memory implementation for AgentOS.",
   "type": "module",
@@ -34,7 +34,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@agentos/types": "workspace:^"
+    "@agentosdev/types": "workspace:^"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",

@@ -19,7 +19,7 @@ import {
   type GitHubRepositoryOutput,
   type GitHubSearchCodeOutput,
   type RegisteredTool,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 
 const TEST_TOKEN = "ghp_test_secret_token";
 

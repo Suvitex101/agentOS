@@ -6,7 +6,7 @@ import {
   type ConnectorSecurityProfile,
   type SecurityPolicyConfig,
   type SecurityPolicyDecision,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 const RISK_ORDER: Record<ConnectorRiskLevel, number> = {
   [ConnectorRiskLevel.Low]: 1,

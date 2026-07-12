@@ -18,7 +18,7 @@ import {
   type Task,
   type ToolCallRecord,
   type ToolExecutionResult,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface SimpleExecutionEngineOptions {
   id?: string;

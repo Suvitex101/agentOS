@@ -11,7 +11,7 @@ import {
   type ToolAuthor,
   type ToolExample,
   type ToolExecutionResult,
-} from "@agentos/types";
+} from "@agentosdev/types";
 
 export interface ToolExecutionContext<Input = unknown> {
   input: Input;

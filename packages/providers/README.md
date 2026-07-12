@@ -1,13 +1,13 @@
-# @agentos/providers
+# @agentosdev/providers
 
 Model provider foundations and provider adapters for AgentOS.
 
-Most developers should import providers from `@agentos/sdk`.
+Most developers should import providers from `@agentosdev/sdk`.
 
 ## Install
 
 ```bash
-npm install @agentos/providers
+npm install @agentosdev/providers
 ```
 
 ## Purpose
@@ -21,9 +21,9 @@ This package provides:
 The provider abstraction is intentionally broader than LLMs. Providers are
 reasoning engines that planners may use through `ModelProviderResolver`.
 
-## Relationship To @agentos/sdk
+## Relationship To @agentosdev/sdk
 
-`@agentos/sdk` re-exports provider APIs. Use this package directly when building
+`@agentosdev/sdk` re-exports provider APIs. Use this package directly when building
 provider-specific integrations or tests.
 
 ## Alpha Status

@@ -6,7 +6,7 @@ import {
   type ExecutionContext,
   type Plan,
   type Task,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { createTask } from "./index";
 import { RuleBasedPlanner } from "./rule-based-planner";
 

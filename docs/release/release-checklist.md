@@ -30,7 +30,7 @@ publish packages by itself.
 - [ ] `files` does not expose source internals.
 - [ ] `pnpm pack:packages` succeeds.
 - [ ] Packed tarballs install in a temporary external consumer project.
-- [ ] External consumer imports from `@agentos/sdk`.
+- [ ] External consumer imports from `@agentosdev/sdk`.
 - [ ] External consumer executes a deterministic task.
 
 ## npm Metadata Review
@@ -77,7 +77,7 @@ publish packages by itself.
 ## Post-Release Smoke Test
 
 - [ ] Create a fresh project outside the monorepo.
-- [ ] Run `npm install @agentos/sdk`.
+- [ ] Run `npm install @agentosdev/sdk`.
 - [ ] Import the public SDK.
 - [ ] Define an agent.
 - [ ] Run a deterministic task.

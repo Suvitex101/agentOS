@@ -56,7 +56,7 @@ console.log("");
 console.log("Dependency relationships:");
 for (const pkg of publicationOrder) {
   const dependencies = Object.entries(pkg.manifest.dependencies ?? {}).filter(([name]) =>
-    name.startsWith("@agentos/")
+    name.startsWith("@agentosdev/")
   );
   const label = dependencies.length
     ? dependencies.map(([name, specifier]) => `${name}@${specifier}`).join(", ")

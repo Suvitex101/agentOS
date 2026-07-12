@@ -1,5 +1,5 @@
 export const agentOSSDK = {
-  name: "@agentos/sdk",
+  name: "@agentosdev/sdk",
   description: "Developer-facing exports for AgentOS.",
 } as const;
 
@@ -51,7 +51,7 @@ export {
   redactCredentialReference,
   redactMetadata,
   redactSecretValue,
-} from "@agentos/core";
+} from "@agentosdev/core";
 export type {
   AgentDefinition,
   AgentDefinitionConfig,
@@ -96,12 +96,12 @@ export type {
   ToolInspection,
   ToolResolverOptions,
   ToolSummary,
-} from "@agentos/core";
+} from "@agentosdev/core";
 export {
   InMemoryMemoryStore,
   agentOSMemory,
   createInMemoryMemoryStoreExample,
-} from "@agentos/memory";
+} from "@agentosdev/memory";
 export type {
   InMemoryMemoryStoreOptions,
   MemoryClearResult,
@@ -109,13 +109,13 @@ export type {
   MemoryStore,
   MemoryWriteInput,
   MemoryWriteResult,
-} from "@agentos/memory";
+} from "@agentosdev/memory";
 export {
   agentOSConnectors,
   createFilesystemConnector,
   createGitHubConnector,
   createHttpConnector,
-} from "@agentos/connectors";
+} from "@agentosdev/connectors";
 export type {
   FileEntry,
   FilesystemConnectorOptions,
@@ -150,13 +150,13 @@ export type {
   SearchMatch,
   WriteFileInput,
   WriteFileOutput,
-} from "@agentos/connectors";
+} from "@agentosdev/connectors";
 export {
   HTTPModelProviderBase,
   agentOSProviders,
   createOllamaProvider,
   createOpenAICompatibleProvider,
-} from "@agentos/providers";
+} from "@agentosdev/providers";
 export type {
   HTTPModelProviderAdapter,
   HTTPModelProviderAdapterResponse,
@@ -167,5 +167,5 @@ export type {
   OllamaProvider,
   OllamaProviderOptions,
   OpenAICompatibleProviderOptions,
-} from "@agentos/providers";
-export * from "@agentos/types";
+} from "@agentosdev/providers";
+export * from "@agentosdev/types";

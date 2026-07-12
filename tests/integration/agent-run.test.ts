@@ -13,7 +13,7 @@ import {
   type Plan,
   type Planner,
   type Task,
-} from "@agentos/sdk";
+} from "@agentosdev/sdk";
 import {
   createFailingTool,
   createTestAgent,

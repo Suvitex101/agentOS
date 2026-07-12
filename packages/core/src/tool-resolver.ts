@@ -4,7 +4,7 @@ import {
   type ToolResolutionRequest,
   type ToolResolutionResult,
   type ToolResolver as ToolResolverContract,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import type { AgentOSRegistry } from "./agentos-registry";
 
 export interface ToolResolverOptions {

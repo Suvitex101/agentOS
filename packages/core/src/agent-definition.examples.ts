@@ -1,5 +1,5 @@
-import { MemoryScope, MemoryType, ToolPermissionLevel } from "@agentos/types";
-import { InMemoryMemoryStore } from "@agentos/memory";
+import { MemoryScope, MemoryType, ToolPermissionLevel } from "@agentosdev/types";
+import { InMemoryMemoryStore } from "@agentosdev/memory";
 import { AgentOSRegistry, createAgentOSRegistryBootstrapExample } from "./agentos-registry";
 import { defineAgent } from "./agent-definition";
 import { RuleBasedPlanner } from "./rule-based-planner";

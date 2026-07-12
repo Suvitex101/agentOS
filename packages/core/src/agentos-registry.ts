@@ -13,7 +13,7 @@ import {
   type RegistryValidationIssue,
   type RegistryValidationResult,
   type Resource,
-} from "@agentos/types";
+} from "@agentosdev/types";
 import { defineConnector, type ConnectorDefinition } from "./connector-definition";
 import { createMockTools } from "./mock-tools";
 import { SecurityPolicyEngine } from "./security-policy-engine";
