@@ -20,12 +20,15 @@ npm init -y
 npm install @agentosdev/sdk@alpha
 cat > index.mjs <<'EOF'
 import {
-  AgentOSRegistry,
   InMemoryMemoryStore,
+  ResultStatus,
   RuleBasedPlanner,
   SimpleExecutionEngine,
+  createAgentOSRegistryBootstrapExample,
   defineAgent,
 } from "@agentosdev/sdk";
+
+const registry = createAgentOSRegistryBootstrapExample();
 
 const agent = defineAgent({
   id: "smoke-agent",
@@ -33,14 +36,18 @@ const agent = defineAgent({
   description: "Verifies the published AgentOS SDK package.",
   planner: new RuleBasedPlanner(),
   executionEngine: new SimpleExecutionEngine(),
-  registry: new AgentOSRegistry(),
+  registry,
   memoryStore: new InMemoryMemoryStore(),
 });
 
 const result = await agent.run("Summarize the AgentOS alpha release.");
 
-if (result.status !== "completed") {
+if (result.status !== ResultStatus.Completed) {
   throw new Error(`Expected completed result, received ${result.status}`);
+}
+
+if (!result.toolCalls.length) {
+  throw new Error("Expected at least one tool call from the bootstrap registry.");
 }
 
 console.log("AgentOS npm smoke test passed.");
