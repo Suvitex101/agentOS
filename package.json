@@ -35,6 +35,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "release:package-boundaries": "node scripts/validate-package-boundaries.mjs",
+    "release:npm-preflight": "node scripts/npm-release-preflight.mjs",
     "pack:packages": "node scripts/pack-packages.mjs",
     "release:check": "pnpm format:check && pnpm typecheck && pnpm lint && pnpm test && pnpm test:evaluation && pnpm build && pnpm test:examples && pnpm test:package-install",
     "example:basic": "tsx examples/basic-agent/index.ts",

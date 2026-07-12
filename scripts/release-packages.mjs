@@ -20,15 +20,15 @@ export const publishablePackages = [
     decision: "publishable now",
   },
   {
-    name: "@agentos/connectors",
-    directory: "packages/connectors",
-    tarballPrefix: "agentos-connectors",
-    decision: "publishable now",
-  },
-  {
     name: "@agentos/providers",
     directory: "packages/providers",
     tarballPrefix: "agentos-providers",
+    decision: "publishable now",
+  },
+  {
+    name: "@agentos/connectors",
+    directory: "packages/connectors",
+    tarballPrefix: "agentos-connectors",
     decision: "publishable now",
   },
   {

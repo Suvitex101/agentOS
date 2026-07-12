@@ -1,11 +1,15 @@
-# AgentOS 0.1.0-alpha.1
+# AgentOS v0.1.0-alpha.1
 
-First public alpha candidate for AgentOS.
+First public alpha release for AgentOS.
 
 AgentOS is an open-source, task-centric infrastructure layer for building
 intelligent agents. It is designed around tasks, plans, registries, tools,
 connectors, memory, and provider-agnostic reasoning engines rather than around
 one model vendor.
+
+This is an alpha release. It is intended for experimentation, contribution,
+architecture review, and early integration feedback rather than production
+deployment.
 
 ## Highlights
 
@@ -34,7 +38,7 @@ one model vendor.
 After publication:
 
 ```bash
-npm install @agentos/sdk
+npm install @agentos/sdk@alpha
 ```
 
 ## Minimal Example
@@ -89,6 +93,16 @@ OLLAMA_MODEL=llama3.1 pnpm smoke:ollama
   foundation, and native Ollama.
 - No streaming, embeddings, OAuth flows, cloud deployment runtime, or production
   dashboard yet.
+
+## Security Guidance
+
+- Do not commit credentials or API tokens.
+- Use the Credential SDK for provider and connector secrets.
+- Configure connector security profiles and policies before enabling external
+  or write-capable connectors.
+- Keep filesystem connector workspaces scoped to dedicated project directories.
+- Treat HTTP and GitHub connector usage as external network access, even when
+  examples are deterministic in CI.
 
 ## Roadmap
 
