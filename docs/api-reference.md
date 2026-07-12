@@ -515,3 +515,70 @@ Safety behavior:
 
 Current limitations: no authentication, OAuth, cookies, sessions, POST, PUT,
 DELETE, WebSockets, streaming, or provider-specific clients.
+
+## `createGitHubConnector(options)`
+
+Creates a read-first GitHub REST connector using the Connector SDK and
+Credential SDK.
+
+Required options:
+
+- `credential`: `CredentialReference` resolved at request time
+
+Optional options:
+
+- `id`
+- `name`
+- `description`
+- `version`
+- `baseUrl`
+- `timeoutMs`
+- `maxResponseBytes`
+- `enableWrites`
+- `fetchImplementation`
+- `credentialResolver`
+- `credentialResolverOptions`
+- `userAgent`
+
+The connector exposes:
+
+- repository capability
+- source-code capability
+- issues capability
+- search capability
+- `GetRepositoryTool`
+- `ListRepositoriesTool`
+- `ReadFileTool`
+- `SearchCodeTool`
+- `ListIssuesTool`
+- `GetIssueTool`
+
+`CreateIssueTool` is included only when `enableWrites: true`.
+
+Example:
+
+```ts
+import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const github = createGitHubConnector({
+  credential: {
+    type: CredentialType.Environment,
+    name: "GITHUB_TOKEN",
+  },
+});
+
+registry.registerConnectorBundle(github);
+```
+
+Safety behavior:
+
+- credentials are resolved only at request time
+- resolved tokens are never included in inspectable objects or tool results
+- redirects are rejected
+- response size and timeout limits are enforced
+- GitHub rate limits return typed errors
+- safe GET requests may retry once
+- write-enabled connectors are high risk and require approval
+
+See [GitHub Connector](github-connector.md).

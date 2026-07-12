@@ -2,9 +2,17 @@ import { lookup } from "node:dns/promises";
 import { mkdir, readdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import { isIP } from "node:net";
 import path from "node:path";
-import { defineConnector, defineTool, type ConnectorDefinition } from "@agentos/core";
+import {
+  CredentialResolver,
+  defineConnector,
+  defineTool,
+  type ConnectorDefinition,
+  type CredentialResolverOptions,
+  type ToolDefinition,
+} from "@agentos/core";
 import {
   CapabilityCategory,
+  ConnectorAuthType,
   ConnectorPermission,
   ConnectorRiskLevel,
   ConnectorTrustLevel,
@@ -12,6 +20,7 @@ import {
   ToolCategory,
   ToolPermissionLevel,
   type AgentOSError,
+  type CredentialReference,
   type ToolExecutionResult,
 } from "@agentos/types";
 
@@ -41,6 +50,24 @@ export interface HttpConnectorOptions {
   version?: string;
   fetchImplementation?: HttpFetch;
   resolveHost?: HttpResolveHost;
+}
+
+export type GitHubFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
+
+export interface GitHubConnectorOptions {
+  credential: CredentialReference;
+  id?: string;
+  name?: string;
+  description?: string;
+  version?: string;
+  baseUrl?: string;
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+  enableWrites?: boolean;
+  fetchImplementation?: GitHubFetch;
+  credentialResolver?: CredentialResolver;
+  credentialResolverOptions?: CredentialResolverOptions;
+  userAgent?: string;
 }
 
 export interface ListFilesInput {
@@ -118,6 +145,112 @@ export interface HttpGetOutput {
   bytesRead: number;
 }
 
+export interface GitHubRepositoryInput {
+  owner: string;
+  repo: string;
+}
+
+export interface GitHubRepositoryOutput {
+  id: number;
+  name: string;
+  fullName: string;
+  private: boolean;
+  defaultBranch?: string;
+  description?: string;
+  htmlUrl?: string;
+  visibility?: string;
+  owner?: string;
+}
+
+export interface GitHubListRepositoriesInput {
+  owner?: string;
+  organization?: string;
+  visibility?: "all" | "public" | "private";
+  perPage?: number;
+  page?: number;
+}
+
+export interface GitHubListRepositoriesOutput {
+  repositories: GitHubRepositoryOutput[];
+}
+
+export interface GitHubReadFileInput extends GitHubRepositoryInput {
+  path: string;
+  ref?: string;
+}
+
+export interface GitHubReadFileOutput {
+  owner: string;
+  repo: string;
+  path: string;
+  ref?: string;
+  encoding?: string;
+  content: string;
+  size: number;
+  sha?: string;
+  htmlUrl?: string;
+}
+
+export interface GitHubSearchCodeInput {
+  query: string;
+  owner?: string;
+  repo?: string;
+  language?: string;
+  perPage?: number;
+  page?: number;
+}
+
+export interface GitHubSearchCodeResult {
+  name: string;
+  path: string;
+  repository: string;
+  htmlUrl?: string;
+  score?: number;
+}
+
+export interface GitHubSearchCodeOutput {
+  totalCount: number;
+  incompleteResults: boolean;
+  items: GitHubSearchCodeResult[];
+}
+
+export interface GitHubListIssuesInput extends GitHubRepositoryInput {
+  state?: "open" | "closed" | "all";
+  perPage?: number;
+  page?: number;
+}
+
+export interface GitHubIssueOutput {
+  id: number;
+  number: number;
+  title: string;
+  state: string;
+  htmlUrl?: string;
+  user?: string;
+  labels: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  body?: string;
+}
+
+export interface GitHubListIssuesOutput {
+  issues: GitHubIssueOutput[];
+}
+
+export interface GitHubGetIssueInput extends GitHubRepositoryInput {
+  issueNumber: number;
+}
+
+export interface GitHubCreateIssueInput extends GitHubRepositoryInput {
+  title: string;
+  body?: string;
+  labels?: string[];
+}
+
+export interface GitHubCreateIssueOutput {
+  issue: GitHubIssueOutput;
+}
+
 interface SafePathResult {
   success: boolean;
   absolutePath?: string;
@@ -140,6 +273,10 @@ const MAX_LIST_ENTRIES = 1000;
 const MAX_SEARCH_FILE_SIZE_BYTES = 1024 * 1024;
 const DEFAULT_HTTP_TIMEOUT_MS = 5000;
 const DEFAULT_HTTP_MAX_RESPONSE_BYTES = 1024 * 1024;
+const DEFAULT_GITHUB_BASE_URL = "https://api.github.com";
+const DEFAULT_GITHUB_TIMEOUT_MS = 5000;
+const DEFAULT_GITHUB_MAX_RESPONSE_BYTES = 1024 * 1024;
+const DEFAULT_GITHUB_PER_PAGE = 30;
 const SENSITIVE_HEADER_NAMES = new Set([
   "authorization",
   "cookie",
@@ -654,6 +791,945 @@ export function createHttpConnector(options: HttpConnectorOptions): ConnectorDef
   });
 }
 
+export function createGitHubConnector(options: GitHubConnectorOptions): ConnectorDefinition {
+  const connectorId = options.id ?? "github";
+  const timeoutMs = options.timeoutMs ?? DEFAULT_GITHUB_TIMEOUT_MS;
+  const maxResponseBytes = options.maxResponseBytes ?? DEFAULT_GITHUB_MAX_RESPONSE_BYTES;
+  const baseUrl = normalizeGitHubBaseUrl(options.baseUrl ?? DEFAULT_GITHUB_BASE_URL);
+  const fetchImplementation = options.fetchImplementation ?? fetch;
+  const credentialResolver =
+    options.credentialResolver ?? new CredentialResolver(options.credentialResolverOptions);
+  const credentialSummary = credentialResolver.inspectReference(options.credential);
+  const userAgent = options.userAgent ?? "AgentOS-GitHubConnector/1.0";
+  const enableWrites = options.enableWrites ?? false;
+  const toolPrefix = `tool-${connectorId}`;
+  const client = new GitHubRestClient({
+    baseUrl,
+    credential: options.credential,
+    credentialResolver,
+    fetchImplementation,
+    maxResponseBytes,
+    timeoutMs,
+    userAgent,
+  });
+
+  if (timeoutMs <= 0) {
+    throw new Error("GitHubConnector timeoutMs must be greater than zero.");
+  }
+
+  if (maxResponseBytes <= 0) {
+    throw new Error("GitHubConnector maxResponseBytes must be greater than zero.");
+  }
+
+  const getRepositoryTool = defineTool<unknown, GitHubRepositoryOutput>({
+    id: `${toolPrefix}-get-repository`,
+    name: "GetRepositoryTool",
+    description: "Fetches GitHub repository metadata.",
+    capability: "repository",
+    capabilityIds: ["repository", "source-code"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubRepositoryInput(input);
+      const validation = validateRepositoryInput(parsedInput);
+
+      if (validation) {
+        return failedGitHubToolResult(startedAt, validation);
+      }
+
+      const response = await client.request({
+        path: `/repos/${encodeURIComponent(parsedInput.owner!)}/${encodeURIComponent(
+          parsedInput.repo!
+        )}`,
+      });
+
+      return githubResultFromResponse(startedAt, response, (body) =>
+        normalizeRepository(body as Record<string, unknown>)
+      );
+    },
+  });
+
+  const listRepositoriesTool = defineTool<unknown, GitHubListRepositoriesOutput>({
+    id: `${toolPrefix}-list-repositories`,
+    name: "ListRepositoriesTool",
+    description: "Lists repositories visible to the authenticated token, owner, or organization.",
+    capability: "repository",
+    capabilityIds: ["repository", "source-code"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubListRepositoriesInput(input);
+      const perPage = normalizePerPage(parsedInput.perPage);
+      const page = normalizePage(parsedInput.page);
+      let path = `/user/repos?per_page=${perPage}&page=${page}&visibility=${
+        parsedInput.visibility ?? "all"
+      }`;
+
+      if (parsedInput.organization) {
+        path = `/orgs/${encodeURIComponent(parsedInput.organization)}/repos?per_page=${perPage}&page=${page}`;
+      } else if (parsedInput.owner) {
+        path = `/users/${encodeURIComponent(parsedInput.owner)}/repos?per_page=${perPage}&page=${page}`;
+      }
+
+      const response = await client.request({ path });
+
+      return githubResultFromResponse(startedAt, response, (body) => ({
+        repositories: Array.isArray(body)
+          ? body.map((repository) => normalizeRepository(repository as Record<string, unknown>))
+          : [],
+      }));
+    },
+  });
+
+  const readFileTool = defineTool<unknown, GitHubReadFileOutput>({
+    id: `${toolPrefix}-read-file`,
+    name: "ReadFileTool",
+    description: "Reads a file from a GitHub repository.",
+    capability: "source-code",
+    capabilityIds: ["source-code", "repository"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubReadFileInput(input);
+      const validation = validateRepositoryInput(parsedInput);
+
+      if (validation) {
+        return failedGitHubToolResult(startedAt, validation);
+      }
+
+      if (!parsedInput.path?.trim()) {
+        return failedGitHubToolResult(
+          startedAt,
+          createGitHubError("github_missing_path", "GitHub file path is required.")
+        );
+      }
+
+      const query = parsedInput.ref ? `?ref=${encodeURIComponent(parsedInput.ref)}` : "";
+      const response = await client.request({
+        path: `/repos/${encodeURIComponent(parsedInput.owner!)}/${encodeURIComponent(
+          parsedInput.repo!
+        )}/contents/${encodePathSegments(parsedInput.path)}${query}`,
+      });
+
+      return githubResultFromResponse(startedAt, response, (body) =>
+        normalizeGitHubFile(body as Record<string, unknown>, parsedInput as GitHubReadFileInput)
+      );
+    },
+  });
+
+  const searchCodeTool = defineTool<unknown, GitHubSearchCodeOutput>({
+    id: `${toolPrefix}-search-code`,
+    name: "SearchCodeTool",
+    description: "Searches GitHub source code through the GitHub REST API.",
+    capability: "search",
+    capabilityIds: ["search", "source-code"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubSearchCodeInput(input);
+      const query = buildGitHubSearchQuery(parsedInput);
+
+      if (!query) {
+        return failedGitHubToolResult(
+          startedAt,
+          createGitHubError("github_missing_query", "GitHub code search query is required.")
+        );
+      }
+
+      const response = await client.request({
+        path: `/search/code?q=${encodeURIComponent(query)}&per_page=${normalizePerPage(
+          parsedInput.perPage
+        )}&page=${normalizePage(parsedInput.page)}`,
+      });
+
+      return githubResultFromResponse(startedAt, response, normalizeSearchCodeOutput);
+    },
+  });
+
+  const listIssuesTool = defineTool<unknown, GitHubListIssuesOutput>({
+    id: `${toolPrefix}-list-issues`,
+    name: "ListIssuesTool",
+    description: "Lists issues for a GitHub repository.",
+    capability: "issues",
+    capabilityIds: ["issues", "repository"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubListIssuesInput(input);
+      const validation = validateRepositoryInput(parsedInput);
+
+      if (validation) {
+        return failedGitHubToolResult(startedAt, validation);
+      }
+
+      const response = await client.request({
+        path: `/repos/${encodeURIComponent(parsedInput.owner!)}/${encodeURIComponent(
+          parsedInput.repo!
+        )}/issues?state=${parsedInput.state ?? "open"}&per_page=${normalizePerPage(
+          parsedInput.perPage
+        )}&page=${normalizePage(parsedInput.page)}`,
+      });
+
+      return githubResultFromResponse(startedAt, response, (body) => ({
+        issues: Array.isArray(body)
+          ? body.map((issue) => normalizeIssue(issue as Record<string, unknown>))
+          : [],
+      }));
+    },
+  });
+
+  const getIssueTool = defineTool<unknown, GitHubIssueOutput>({
+    id: `${toolPrefix}-get-issue`,
+    name: "GetIssueTool",
+    description: "Fetches one GitHub issue by number.",
+    capability: "issues",
+    capabilityIds: ["issues", "repository"],
+    category: ToolCategory.Data,
+    version: "1.0.0",
+    permissionLevel: ToolPermissionLevel.Read,
+    execute: async ({ input }) => {
+      const startedAt = Date.now();
+      const parsedInput = parseGitHubGetIssueInput(input);
+      const validation = validateRepositoryInput(parsedInput);
+
+      if (validation) {
+        return failedGitHubToolResult(startedAt, validation);
+      }
+
+      if (!parsedInput.issueNumber || parsedInput.issueNumber <= 0) {
+        return failedGitHubToolResult(
+          startedAt,
+          createGitHubError("github_invalid_issue_number", "GitHub issueNumber must be positive.")
+        );
+      }
+
+      const response = await client.request({
+        path: `/repos/${encodeURIComponent(parsedInput.owner!)}/${encodeURIComponent(
+          parsedInput.repo!
+        )}/issues/${parsedInput.issueNumber}`,
+      });
+
+      return githubResultFromResponse(startedAt, response, (body) =>
+        normalizeIssue(body as Record<string, unknown>)
+      );
+    },
+  });
+
+  const tools: ToolDefinition[] = [
+    getRepositoryTool,
+    listRepositoriesTool,
+    readFileTool,
+    searchCodeTool,
+    listIssuesTool,
+    getIssueTool,
+  ];
+
+  if (enableWrites) {
+    tools.push(
+      defineTool<unknown, GitHubCreateIssueOutput>({
+        id: `${toolPrefix}-create-issue`,
+        name: "CreateIssueTool",
+        description: "Creates a GitHub issue. This tool is only available when writes are enabled.",
+        capability: "issues",
+        capabilityIds: ["issues", "repository"],
+        category: ToolCategory.Data,
+        version: "1.0.0",
+        permissionLevel: ToolPermissionLevel.Write,
+        execute: async ({ input }) => {
+          const startedAt = Date.now();
+          const parsedInput = parseGitHubCreateIssueInput(input);
+          const validation = validateRepositoryInput(parsedInput);
+
+          if (validation) {
+            return failedGitHubToolResult(startedAt, validation);
+          }
+
+          if (!parsedInput.title?.trim()) {
+            return failedGitHubToolResult(
+              startedAt,
+              createGitHubError("github_missing_issue_title", "GitHub issue title is required.")
+            );
+          }
+
+          const response = await client.request({
+            method: "POST",
+            path: `/repos/${encodeURIComponent(parsedInput.owner!)}/${encodeURIComponent(
+              parsedInput.repo!
+            )}/issues`,
+            body: {
+              title: parsedInput.title,
+              body: parsedInput.body,
+              labels: parsedInput.labels,
+            },
+          });
+
+          return githubResultFromResponse(startedAt, response, (body) => ({
+            issue: normalizeIssue(body as Record<string, unknown>),
+          }));
+        },
+      })
+    );
+  }
+
+  return defineConnector({
+    id: connectorId,
+    name: options.name ?? "GitHub Connector",
+    description:
+      options.description ??
+      "Production GitHub REST connector for safe repository, source-code, issue, and search operations.",
+    version: options.version ?? "1.0.0",
+    authType: ConnectorAuthType.ApiKey,
+    capabilities: [
+      {
+        id: "repository",
+        name: "Repository",
+        description: "Read GitHub repository metadata.",
+        category: CapabilityCategory.Custom,
+        supportedConnectors: [connectorId],
+      },
+      {
+        id: "source-code",
+        name: "Source Code",
+        description: "Read and search GitHub source code.",
+        category: CapabilityCategory.Custom,
+        supportedConnectors: [connectorId],
+      },
+      {
+        id: "issues",
+        name: "Issues",
+        description: "Read GitHub issues and optionally create issues when enabled.",
+        category: CapabilityCategory.Community,
+        supportedConnectors: [connectorId],
+      },
+      {
+        id: "search",
+        name: "Search",
+        description: "Search GitHub code.",
+        category: CapabilityCategory.Search,
+        supportedConnectors: [connectorId],
+      },
+    ],
+    tools,
+    resources: [
+      {
+        id: `${connectorId}-api`,
+        type: ResourceType.Repository,
+        source: connectorId,
+        uri: baseUrl,
+        metadata: {
+          provider: "github",
+          baseUrl,
+          writesEnabled: enableWrites,
+        },
+      },
+    ],
+    tags: ["github", "repository", "source-code", "issues", "search"],
+    security: {
+      riskLevel: enableWrites ? ConnectorRiskLevel.High : ConnectorRiskLevel.Medium,
+      trustLevel: ConnectorTrustLevel.Remote,
+      permissions: [
+        ConnectorPermission.NetworkAccess,
+        ConnectorPermission.ExternalAPI,
+        ConnectorPermission.SecretsAccess,
+      ],
+      requiresUserApproval: enableWrites,
+      networkAccess: true,
+      filesystemAccess: false,
+      secretsAccess: true,
+      metadata: {
+        provider: "github",
+        writesEnabled: enableWrites,
+        methods: enableWrites ? ["GET", "POST"] : ["GET"],
+      },
+    },
+    metadata: {
+      provider: "github",
+      baseUrl,
+      timeoutMs,
+      maxResponseBytes,
+      writesEnabled: enableWrites,
+      credential: credentialSummary,
+    },
+    health() {
+      return {
+        healthy: true,
+        metadata: {
+          baseUrl,
+          timeoutMs,
+          maxResponseBytes,
+          writesEnabled: enableWrites,
+          credential: credentialSummary,
+        },
+      };
+    },
+  });
+}
+
+interface GitHubRequestInput {
+  method?: "GET" | "POST";
+  path: string;
+  body?: Record<string, unknown>;
+}
+
+interface GitHubResponseResult {
+  success: boolean;
+  status?: number;
+  statusText?: string;
+  headers?: Record<string, string>;
+  body?: unknown;
+  error?: AgentOSError;
+  rateLimit?: {
+    limit?: string;
+    remaining?: string;
+    reset?: string;
+  };
+}
+
+interface GitHubRestClientOptions {
+  baseUrl: string;
+  credential: CredentialReference;
+  credentialResolver: CredentialResolver;
+  fetchImplementation: GitHubFetch;
+  maxResponseBytes: number;
+  timeoutMs: number;
+  userAgent: string;
+}
+
+class GitHubRestClient {
+  private readonly baseUrl: string;
+  private readonly credential: CredentialReference;
+  private readonly credentialResolver: CredentialResolver;
+  private readonly fetchImplementation: GitHubFetch;
+  private readonly maxResponseBytes: number;
+  private readonly timeoutMs: number;
+  private readonly userAgent: string;
+
+  constructor(options: GitHubRestClientOptions) {
+    this.baseUrl = options.baseUrl;
+    this.credential = options.credential;
+    this.credentialResolver = options.credentialResolver;
+    this.fetchImplementation = options.fetchImplementation;
+    this.maxResponseBytes = options.maxResponseBytes;
+    this.timeoutMs = options.timeoutMs;
+    this.userAgent = options.userAgent;
+  }
+
+  async request(input: GitHubRequestInput): Promise<GitHubResponseResult> {
+    const method = input.method ?? "GET";
+    const credential = await this.credentialResolver.resolve(this.credential);
+
+    if (!credential.success || !credential.credential) {
+      return {
+        success: false,
+        error: createGitHubError(
+          "github_credential_unavailable",
+          "GitHub credential could not be resolved.",
+          {
+            reference: credential.reference,
+            errors: credential.errors.map((error) => ({
+              code: error.code,
+              message: error.message,
+            })),
+          }
+        ),
+      };
+    }
+
+    const url = new URL(input.path, `${this.baseUrl}/`);
+    const headers: Record<string, string> = {
+      accept: "application/vnd.github+json",
+      authorization: `Bearer ${credential.credential.value}`,
+      "user-agent": this.userAgent,
+      "x-github-api-version": "2022-11-28",
+    };
+    const requestInit: RequestInit = {
+      method,
+      headers,
+      redirect: "manual",
+    };
+
+    if (input.body) {
+      headers["content-type"] = "application/json";
+      requestInit.body = JSON.stringify(removeUndefinedValues(input.body));
+    }
+
+    const attempts = method === "GET" ? 2 : 1;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const response = await this.fetchWithTimeout(url, requestInit);
+
+      if (!response.success) {
+        return response;
+      }
+
+      const shouldRetry =
+        method === "GET" &&
+        attempt < attempts &&
+        response.status !== undefined &&
+        (response.status === 429 || response.status >= 500);
+
+      if (shouldRetry) {
+        await waitForRetryWindow();
+        continue;
+      }
+
+      return response;
+    }
+
+    return {
+      success: false,
+      error: createGitHubError("github_request_failed", "GitHub request failed."),
+    };
+  }
+
+  private async fetchWithTimeout(url: URL, init: RequestInit): Promise<GitHubResponseResult> {
+    const controller = new AbortController();
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          controller.abort();
+          reject(createGitHubError("github_timeout", "GitHub request exceeded timeout."));
+        }, this.timeoutMs);
+      });
+
+      const response = await Promise.race([
+        this.fetchImplementation(url, {
+          ...init,
+          signal: controller.signal,
+        }),
+        timeout,
+      ]);
+
+      if (response.status >= 300 && response.status < 400) {
+        return {
+          success: false,
+          status: response.status,
+          statusText: response.statusText,
+          headers: safeResponseHeaders(response.headers),
+          error: createGitHubError("github_redirect_denied", "GitHub redirects are not allowed.", {
+            status: response.status,
+          }),
+          rateLimit: readGitHubRateLimit(response.headers),
+        };
+      }
+
+      const body = await readGitHubResponseBody(response, this.maxResponseBytes);
+      const rateLimit = readGitHubRateLimit(response.headers);
+      const headers = safeResponseHeaders(response.headers);
+
+      if (response.status >= 400) {
+        return {
+          success: false,
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+          body,
+          error: createGitHubHttpError(response, body, rateLimit),
+          rateLimit,
+        };
+      }
+
+      return {
+        success: true,
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+        body,
+        rateLimit,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: normalizeGitHubError(error),
+      };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+}
+
+function parseGitHubRepositoryInput(input: unknown): Partial<GitHubRepositoryInput> {
+  const record = asRecord(input);
+
+  return {
+    owner: readOptionalString(record.owner),
+    repo: readOptionalString(record.repo),
+  };
+}
+
+function parseGitHubListRepositoriesInput(input: unknown): Partial<GitHubListRepositoriesInput> {
+  const record = asRecord(input);
+
+  return {
+    owner: readOptionalString(record.owner),
+    organization: readOptionalString(record.organization),
+    visibility: readOptionalString(record.visibility) as GitHubListRepositoriesInput["visibility"],
+    perPage: readOptionalNumber(record.perPage),
+    page: readOptionalNumber(record.page),
+  };
+}
+
+function parseGitHubReadFileInput(input: unknown): Partial<GitHubReadFileInput> {
+  const record = asRecord(input);
+
+  return {
+    ...parseGitHubRepositoryInput(input),
+    path: readOptionalString(record.path),
+    ref: readOptionalString(record.ref),
+  };
+}
+
+function parseGitHubSearchCodeInput(input: unknown): Partial<GitHubSearchCodeInput> {
+  const record = asRecord(input);
+
+  return {
+    query: readOptionalString(record.query),
+    owner: readOptionalString(record.owner),
+    repo: readOptionalString(record.repo),
+    language: readOptionalString(record.language),
+    perPage: readOptionalNumber(record.perPage),
+    page: readOptionalNumber(record.page),
+  };
+}
+
+function parseGitHubListIssuesInput(input: unknown): Partial<GitHubListIssuesInput> {
+  const record = asRecord(input);
+
+  return {
+    ...parseGitHubRepositoryInput(input),
+    state: readOptionalString(record.state) as GitHubListIssuesInput["state"],
+    perPage: readOptionalNumber(record.perPage),
+    page: readOptionalNumber(record.page),
+  };
+}
+
+function parseGitHubGetIssueInput(input: unknown): Partial<GitHubGetIssueInput> {
+  const record = asRecord(input);
+
+  return {
+    ...parseGitHubRepositoryInput(input),
+    issueNumber: readOptionalNumber(record.issueNumber),
+  };
+}
+
+function parseGitHubCreateIssueInput(input: unknown): Partial<GitHubCreateIssueInput> {
+  const record = asRecord(input);
+
+  return {
+    ...parseGitHubRepositoryInput(input),
+    title: readOptionalString(record.title),
+    body: readOptionalString(record.body),
+    labels: Array.isArray(record.labels)
+      ? record.labels.filter((label): label is string => typeof label === "string")
+      : undefined,
+  };
+}
+
+function validateRepositoryInput(input: Partial<GitHubRepositoryInput>): AgentOSError | undefined {
+  if (!input.owner?.trim()) {
+    return createGitHubError("github_missing_owner", "GitHub repository owner is required.");
+  }
+
+  if (!input.repo?.trim()) {
+    return createGitHubError("github_missing_repo", "GitHub repository name is required.");
+  }
+
+  return undefined;
+}
+
+function normalizeGitHubBaseUrl(input: string): string {
+  const url = new URL(input);
+
+  if (url.protocol !== "https:") {
+    throw new Error("GitHubConnector baseUrl must use HTTPS.");
+  }
+
+  if (url.username || url.password) {
+    throw new Error("GitHubConnector baseUrl must not include credentials.");
+  }
+
+  return url.origin;
+}
+
+function normalizePerPage(perPage: number | undefined): number {
+  if (!perPage || !Number.isFinite(perPage)) {
+    return DEFAULT_GITHUB_PER_PAGE;
+  }
+
+  return Math.min(100, Math.max(1, Math.floor(perPage)));
+}
+
+function normalizePage(page: number | undefined): number {
+  if (!page || !Number.isFinite(page)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(page));
+}
+
+function buildGitHubSearchQuery(input: Partial<GitHubSearchCodeInput>): string {
+  const parts = [input.query?.trim()].filter(Boolean) as string[];
+
+  if (input.owner && input.repo) {
+    parts.push(`repo:${input.owner}/${input.repo}`);
+  } else if (input.owner) {
+    parts.push(`user:${input.owner}`);
+  }
+
+  if (input.language) {
+    parts.push(`language:${input.language}`);
+  }
+
+  return parts.join(" ");
+}
+
+function normalizeRepository(record: Record<string, unknown>): GitHubRepositoryOutput {
+  return {
+    id: readNumber(record.id),
+    name: readString(record.name),
+    fullName: readString(record.full_name),
+    private: readBoolean(record.private),
+    defaultBranch: readOptionalString(record.default_branch),
+    description: readOptionalString(record.description),
+    htmlUrl: readOptionalString(record.html_url),
+    visibility: readOptionalString(record.visibility),
+    owner: readOptionalString(asRecord(record.owner).login),
+  };
+}
+
+function normalizeGitHubFile(
+  record: Record<string, unknown>,
+  input: GitHubReadFileInput
+): GitHubReadFileOutput {
+  const encoding = readOptionalString(record.encoding);
+  const rawContent = readString(record.content);
+  const content =
+    encoding === "base64"
+      ? Buffer.from(rawContent.replace(/\s/g, ""), "base64").toString("utf8")
+      : rawContent;
+
+  return {
+    owner: input.owner,
+    repo: input.repo,
+    path: readString(record.path) || input.path,
+    ref: input.ref,
+    encoding,
+    content,
+    size: readNumber(record.size),
+    sha: readOptionalString(record.sha),
+    htmlUrl: readOptionalString(record.html_url),
+  };
+}
+
+function normalizeSearchCodeOutput(body: unknown): GitHubSearchCodeOutput {
+  const record = asRecord(body);
+
+  return {
+    totalCount: readNumber(record.total_count),
+    incompleteResults: readBoolean(record.incomplete_results),
+    items: Array.isArray(record.items)
+      ? record.items.map((item) => {
+          const itemRecord = asRecord(item);
+          const repository = asRecord(itemRecord.repository);
+
+          return {
+            name: readString(itemRecord.name),
+            path: readString(itemRecord.path),
+            repository: readString(repository.full_name),
+            htmlUrl: readOptionalString(itemRecord.html_url),
+            score: readOptionalNumber(itemRecord.score),
+          };
+        })
+      : [],
+  };
+}
+
+function normalizeIssue(record: Record<string, unknown>): GitHubIssueOutput {
+  const user = asRecord(record.user);
+
+  return {
+    id: readNumber(record.id),
+    number: readNumber(record.number),
+    title: readString(record.title),
+    state: readString(record.state),
+    htmlUrl: readOptionalString(record.html_url),
+    body: readOptionalString(record.body),
+    user: readOptionalString(user.login),
+    labels: Array.isArray(record.labels)
+      ? record.labels
+          .map((label) => {
+            if (typeof label === "string") {
+              return label;
+            }
+
+            return readOptionalString(asRecord(label).name);
+          })
+          .filter((label): label is string => Boolean(label))
+      : [],
+    createdAt: readOptionalString(record.created_at),
+    updatedAt: readOptionalString(record.updated_at),
+  };
+}
+
+function githubResultFromResponse<Output>(
+  startedAt: number,
+  response: GitHubResponseResult,
+  normalize: (body: unknown) => Output
+): ToolExecutionResult<Output> {
+  if (!response.success) {
+    return failedGitHubToolResult(startedAt, response.error);
+  }
+
+  try {
+    return {
+      success: true,
+      output: normalize(response.body),
+      metadata: {
+        status: response.status,
+        statusText: response.statusText,
+        rateLimit: response.rateLimit,
+      },
+      durationMs: Date.now() - startedAt,
+      errors: [],
+    };
+  } catch {
+    return failedGitHubToolResult(
+      startedAt,
+      createGitHubError("github_malformed_response", "GitHub response shape was not recognized.")
+    );
+  }
+}
+
+function failedGitHubToolResult<Output>(
+  startedAt: number,
+  error: AgentOSError | undefined
+): ToolExecutionResult<Output> {
+  return {
+    success: false,
+    durationMs: Date.now() - startedAt,
+    errors: [error ?? createGitHubError("github_unknown_error", "GitHub tool failed.")],
+  };
+}
+
+async function readGitHubResponseBody(response: Response, maxResponseBytes: number) {
+  const body = await readHttpBody(response, maxResponseBytes);
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!body.body) {
+    return undefined;
+  }
+
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(body.body) as unknown;
+    } catch {
+      throw createGitHubError("github_invalid_json", "GitHub returned invalid JSON.");
+    }
+  }
+
+  return body.body;
+}
+
+function readGitHubRateLimit(headers: Headers): GitHubResponseResult["rateLimit"] {
+  return {
+    limit: headers.get("x-ratelimit-limit") ?? undefined,
+    remaining: headers.get("x-ratelimit-remaining") ?? undefined,
+    reset: headers.get("x-ratelimit-reset") ?? undefined,
+  };
+}
+
+function createGitHubHttpError(
+  response: Response,
+  body: unknown,
+  rateLimit: GitHubResponseResult["rateLimit"]
+): AgentOSError {
+  if ((response.status === 403 || response.status === 429) && rateLimit?.remaining === "0") {
+    return createGitHubError("github_rate_limited", "GitHub rate limit was exceeded.", {
+      status: response.status,
+      rateLimit,
+    });
+  }
+
+  if (response.status === 401) {
+    return createGitHubError("github_unauthorized", "GitHub request was unauthorized.", {
+      status: response.status,
+    });
+  }
+
+  if (response.status === 403) {
+    return createGitHubError("github_forbidden", "GitHub request was forbidden.", {
+      status: response.status,
+    });
+  }
+
+  if (response.status === 404) {
+    return createGitHubError("github_not_found", "GitHub resource was not found.", {
+      status: response.status,
+    });
+  }
+
+  const message = readOptionalString(asRecord(body).message) ?? "GitHub request failed.";
+
+  return createGitHubError("github_http_error", message, {
+    status: response.status,
+  });
+}
+
+function normalizeGitHubError(error: unknown): AgentOSError {
+  if (isAgentOSError(error)) {
+    if (error.code === "http_response_too_large") {
+      return createGitHubError("github_response_too_large", error.message);
+    }
+
+    return error;
+  }
+
+  if (error instanceof Error && error.name === "AbortError") {
+    return createGitHubError("github_timeout", "GitHub request exceeded timeout.");
+  }
+
+  return createGitHubError("github_request_failed", "GitHub request failed.");
+}
+
+function createGitHubError(
+  code: string,
+  message: string,
+  metadata?: Record<string, unknown>
+): AgentOSError {
+  return {
+    code,
+    message,
+    recoverable: true,
+    metadata,
+  };
+}
+
+function encodePathSegments(filePath: string): string {
+  return filePath.split("/").map(encodeURIComponent).join("/");
+}
+
+function removeUndefinedValues(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
+}
+
+async function waitForRetryWindow(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function parseListFilesInput(input: unknown): Partial<ListFilesInput> {
   const record = asRecord(input);
 
@@ -710,6 +1786,22 @@ function readOptionalString(value: unknown): string | undefined {
 
 function readOptionalBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function readOptionalNumber(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+function readString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function readNumber(value: unknown): number {
+  return typeof value === "number" ? value : 0;
+}
+
+function readBoolean(value: unknown): boolean {
+  return typeof value === "boolean" ? value : false;
 }
 
 function readOptionalStringRecord(value: unknown): Record<string, string> | undefined {

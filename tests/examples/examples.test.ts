@@ -22,6 +22,7 @@ describe("runnable examples", () => {
     ["community-connector", "../../examples/community-connector/index.ts"],
     ["filesystem-connector", "../../examples/filesystem-connector/index.ts"],
     ["http-connector", "../../examples/http-connector/index.ts"],
+    ["github-connector", "../../examples/github-connector/index.ts"],
     ["model-provider", "../../examples/model-provider/index.ts"],
     ["provider-registry", "../../examples/provider-registry/index.ts"],
     ["model-assisted-planner", "../../examples/model-assisted-planner/index.ts"],

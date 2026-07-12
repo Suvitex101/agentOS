@@ -16,8 +16,9 @@ Mission -> Task -> Planner -> Plan -> Execution Engine -> Tool Resolver -> Regis
 The current implementation is local and provider-agnostic. It includes a
 rule-based planner, local execution engine, in-memory registry, in-memory memory
 store, declarative tool and connector authoring APIs, runnable examples, tests,
-and CI. It does not yet include real external API calls, LLM provider
-integration, database-backed memory, or dashboard functionality.
+and CI. It now includes a read-first GitHub connector as the first external
+platform connector. It does not yet include a broad production connector
+ecosystem, database-backed memory, or dashboard functionality.
 
 ## Start Here
 
@@ -38,6 +39,8 @@ integration, database-backed memory, or dashboard functionality.
   transport base and OpenAI-compatible adapter foundation.
 - [Credential SDK](docs/credential-sdk.md): framework-wide credential
   references, resolution, and redaction.
+- [GitHub Connector](docs/github-connector.md): first production-grade external
+  connector using the Connector SDK and Credential SDK.
 - [Live Model Testing](docs/live-model-testing.md): opt-in OpenAI-compatible
   workflow smoke testing.
 - [Plan Validation](docs/plan-validation.md): versioned validation and repair
@@ -82,8 +85,9 @@ Read the deeper documents:
 AgentOS is an early local-first foundation:
 
 - runtime execution is local-first
-- connectors are currently local or mocked
-- no production external provider integrations exist yet
+- most connectors are currently local or mocked
+- GitHub is the first read-first external connector; broader provider coverage
+  is still future work
 - no persistent database-backed memory exists yet
 - the dashboard shell is not production-ready yet
 
@@ -102,7 +106,7 @@ packages/
   sdk/          Developer-facing exports
   types/        Shared TypeScript domain and architecture types
   tools/        Placeholder for future tool helpers
-  connectors/  Placeholder for future provider connectors
+  connectors/  Filesystem, HTTP, and GitHub connector implementations
   config/       Shared TypeScript configuration
 
 examples/       Runnable local examples
@@ -152,6 +156,12 @@ Run the HTTP connector example:
 
 ```bash
 pnpm example:http
+```
+
+Run the GitHub connector example:
+
+```bash
+pnpm example:github
 ```
 
 Run the model provider example:
@@ -448,6 +458,39 @@ Safety model:
 
 Current limitations: no authentication, cookies, sessions, request bodies,
 state-changing methods, WebSockets, streaming API, or provider-specific clients.
+
+## GitHub Connector
+
+`createGitHubConnector()` creates a read-first GitHub REST connector using the
+Connector SDK and Credential SDK. It exposes repository, source-code, issues,
+and search capabilities through tools.
+
+```ts
+import { AgentOSRegistry, CredentialType, createGitHubConnector } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const githubConnector = createGitHubConnector({
+  credential: {
+    type: CredentialType.Environment,
+    name: "GITHUB_TOKEN",
+  },
+});
+
+registry.registerConnectorBundle(githubConnector);
+```
+
+Supported read tools:
+
+- `GetRepositoryTool`
+- `ListRepositoriesTool`
+- `ReadFileTool`
+- `SearchCodeTool`
+- `ListIssuesTool`
+- `GetIssueTool`
+
+`CreateIssueTool` is optional and only included when `enableWrites: true`.
+Write-enabled connectors are marked high risk and require explicit approval by
+policy. See [docs/github-connector.md](docs/github-connector.md).
 
 ## Model Provider SDK
 

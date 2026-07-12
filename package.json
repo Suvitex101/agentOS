@@ -31,6 +31,7 @@
     "example:community-connector": "tsx examples/community-connector/index.ts",
     "example:filesystem": "tsx examples/filesystem-connector/index.ts",
     "example:http": "tsx examples/http-connector/index.ts",
+    "example:github": "tsx examples/github-connector/index.ts",
     "example:model-provider": "tsx examples/model-provider/index.ts",
     "example:provider-registry": "tsx examples/provider-registry/index.ts",
     "example:model-assisted-planner": "tsx examples/model-assisted-planner/index.ts",
