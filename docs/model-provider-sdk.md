@@ -84,6 +84,10 @@ AgentOS includes two local providers:
 
 They do not call external APIs.
 
+AgentOS also includes `createOllamaProvider()`, the first native local provider
+for locally hosted open models. It uses Ollama's native API while still
+implementing the same Model Provider SDK contract.
+
 ## HTTP Provider Foundation
 
 AgentOS includes `HTTPModelProviderBase` for future remote providers. It owns
@@ -134,6 +138,40 @@ const transport = new HTTPModelProviderBase({
 
 Credentials remain references until request time. See
 [Credential SDK](credential-sdk.md).
+
+## Ollama Provider
+
+`createOllamaProvider()` maps AgentOS generation requests to Ollama's native
+`/api/generate` endpoint.
+
+```ts
+import { createOllamaProvider } from "@agentos/sdk";
+
+const provider = createOllamaProvider({
+  model: "llama3.1",
+});
+```
+
+Defaults:
+
+- `baseUrl`: `http://localhost:11434`
+- `allowRemote`: `false`
+
+The provider is local-first. Remote endpoints require `allowRemote: true`, and
+remote HTTP URLs are rejected by the shared HTTP transport.
+
+Request mapping:
+
+- `prompt` -> `prompt`
+- `systemPrompt` -> `system`
+- `temperature` -> `options.temperature`
+- `maxTokens` -> `options.num_predict`
+- `metadata.contextWindow` -> `options.num_ctx`
+
+The provider also exposes `health()` for checking reachability, configured model
+availability, and Ollama version when available.
+
+See [Ollama Provider](ollama-provider.md).
 
 ## Live Model Workflow
 
@@ -250,12 +288,13 @@ See [Plan Validation](plan-validation.md) and [Planner Prompts](planner-prompts.
 
 ## Current Limitations
 
-- no live OpenAI, Anthropic, Gemini, or Ollama integration
+- no native OpenAI, Anthropic, or Gemini provider packages yet
 - no OAuth, API-key management helper, or secret manager
-- no authentication
 - no streaming
-- no retries
-- no live external provider examples
+- no provider-level retries
+- Ollama live usage is opt-in and local-first
+- OpenAI-compatible live usage is opt-in and configured through environment
+  variables
 
 Future provider integrations should build on this contract without making
 AgentOS model-centric.

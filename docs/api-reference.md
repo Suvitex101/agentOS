@@ -117,11 +117,12 @@ Response shape:
 - `model`
 - `durationMs`
 
-Built-in local providers:
+Built-in provider exports:
 
 - `MockModelProvider`
 - `EchoModelProvider`
 - `createOpenAICompatibleProvider()`
+- `createOllamaProvider()`
 
 Provider capabilities are extensible strings. Common exported capability
 constants include:
@@ -201,6 +202,49 @@ Important fields:
 This is adapter foundation code, not a live OpenAI integration. It does not
 include API-key helpers, authentication, streaming, retries, or vendor-specific
 runtime behavior.
+
+## `createOllamaProvider(options)`
+
+Creates a native Ollama provider using the existing Model Provider SDK.
+
+Important fields:
+
+- `model`
+- `baseUrl`
+- `timeoutMs`
+- `maxResponseBytes`
+- `allowRemote`
+- `capabilities`
+- `tags`
+- `metadata`
+- `credential`
+- `credentialResolver`
+- `fetchImplementation`
+
+Defaults:
+
+- `baseUrl`: `http://localhost:11434`
+- `allowRemote`: `false`
+
+The provider maps AgentOS requests to Ollama's `/api/generate` endpoint and
+exposes `health()` for checking reachability, model availability, and provider
+version when available.
+
+Example:
+
+```ts
+import { AgentOSRegistry, createOllamaProvider } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const provider = createOllamaProvider({
+  model: "llama3.1",
+});
+
+registry.registerModelProvider(provider);
+registry.setDefaultModelProvider(provider.id);
+```
+
+See [Ollama Provider](ollama-provider.md).
 
 ## `AgentOSRegistry`
 

@@ -154,6 +154,7 @@ export type {
 export {
   HTTPModelProviderBase,
   agentOSProviders,
+  createOllamaProvider,
   createOpenAICompatibleProvider,
 } from "@agentos/providers";
 export type {
@@ -162,6 +163,9 @@ export type {
   HTTPModelProviderFetch,
   HTTPModelProviderRequest,
   HTTPModelProviderTransportConfig,
+  OllamaHealthResult,
+  OllamaProvider,
+  OllamaProviderOptions,
   OpenAICompatibleProviderOptions,
 } from "@agentos/providers";
 export * from "@agentos/types";

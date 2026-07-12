@@ -74,6 +74,7 @@ The SDK is the primary public entry point. It re-exports selected APIs from
 - `ModelProviderResolver`
 - `HTTPModelProviderBase`
 - `createOpenAICompatibleProvider`
+- `createOllamaProvider`
 
 ## Credentials and Security
 

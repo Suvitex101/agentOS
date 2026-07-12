@@ -36,11 +36,13 @@
     "example:provider-registry": "tsx examples/provider-registry/index.ts",
     "example:model-assisted-planner": "tsx examples/model-assisted-planner/index.ts",
     "example:openai-compatible-provider": "tsx examples/openai-compatible-provider/index.ts",
+    "example:ollama-provider": "tsx examples/ollama-provider/index.ts",
     "example:credential-sdk": "tsx examples/credential-sdk/index.ts",
     "example:live-model-agent": "tsx examples/live-model-agent/index.ts",
     "example:plan-validation": "tsx examples/plan-validation/index.ts",
     "example:planner-prompts": "tsx examples/planner-prompts/index.ts",
-    "smoke:live-model": "tsx examples/live-model-agent/index.ts --live"
+    "smoke:live-model": "tsx examples/live-model-agent/index.ts --live",
+    "smoke:ollama": "tsx examples/ollama-provider/index.ts --live"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

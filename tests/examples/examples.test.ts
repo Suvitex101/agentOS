@@ -27,6 +27,7 @@ describe("runnable examples", () => {
     ["provider-registry", "../../examples/provider-registry/index.ts"],
     ["model-assisted-planner", "../../examples/model-assisted-planner/index.ts"],
     ["openai-compatible-provider", "../../examples/openai-compatible-provider/index.ts"],
+    ["ollama-provider", "../../examples/ollama-provider/index.ts"],
     ["credential-sdk", "../../examples/credential-sdk/index.ts"],
     ["live-model-agent", "../../examples/live-model-agent/index.ts"],
     ["plan-validation", "../../examples/plan-validation/index.ts"],

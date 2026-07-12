@@ -37,6 +37,8 @@ ecosystem, database-backed memory, or dashboard functionality.
   future reasoning engines.
 - [HTTP Model Provider Foundation](docs/http-model-provider.md): secure
   transport base and OpenAI-compatible adapter foundation.
+- [Ollama Provider](docs/ollama-provider.md): native local provider for
+  Ollama-hosted open models.
 - [Credential SDK](docs/credential-sdk.md): framework-wide credential
   references, resolution, and redaction.
 - [GitHub Connector](docs/github-connector.md): first production-grade external
@@ -186,6 +188,12 @@ Run the OpenAI-compatible provider foundation example:
 
 ```bash
 pnpm example:openai-compatible-provider
+```
+
+Run the Ollama provider example in deterministic mode:
+
+```bash
+pnpm example:ollama-provider
 ```
 
 Run the credential SDK example:
@@ -521,7 +529,43 @@ maps AgentOS generation requests to an OpenAI-compatible chat-completions shape,
 but examples use mocked transport only. No live model provider API calls or
 API-key helpers are implemented yet.
 
+AgentOS also includes `createOllamaProvider()` for native local Ollama
+generation. It defaults to `http://localhost:11434`, keeps remote endpoints
+disabled unless `allowRemote: true`, and can be used by `ModelAssistedPlanner`
+through the registry and `ModelProviderResolver`.
+
 See [docs/model-provider-sdk.md](docs/model-provider-sdk.md).
+
+## Ollama Provider
+
+`createOllamaProvider()` maps AgentOS generation requests to Ollama's native
+`/api/generate` endpoint.
+
+```ts
+import { AgentOSRegistry, createOllamaProvider } from "@agentos/sdk";
+
+const registry = new AgentOSRegistry();
+const provider = createOllamaProvider({
+  model: "llama3.1",
+});
+
+registry.registerModelProvider(provider);
+registry.setDefaultModelProvider(provider.id);
+```
+
+Run the deterministic example:
+
+```bash
+pnpm example:ollama-provider
+```
+
+Run the opt-in live smoke test:
+
+```bash
+OLLAMA_MODEL=llama3.1 pnpm smoke:ollama
+```
+
+See [docs/ollama-provider.md](docs/ollama-provider.md).
 
 ## HTTP Model Provider Foundation
 

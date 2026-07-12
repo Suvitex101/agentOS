@@ -21,7 +21,7 @@ import {
 
 export const agentOSProviders = {
   name: "@agentos/providers",
-  description: "Provider-agnostic remote model provider foundations for AgentOS.",
+  description: "Provider-agnostic model provider foundations for AgentOS.",
 } as const;
 
 export type HTTPModelProviderFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
@@ -76,13 +76,74 @@ export interface OpenAICompatibleProviderOptions {
   metadata?: AgentOSMetadata;
 }
 
+export interface OllamaProviderOptions {
+  id?: string;
+  name?: string;
+  description?: string;
+  version?: string;
+  baseUrl?: string;
+  model: string;
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+  allowRemote?: boolean;
+  capabilities?: string[];
+  tags?: string[];
+  metadata?: AgentOSMetadata;
+  credential?: CredentialReference;
+  credentialResolver?: CredentialResolverContract;
+  fetchImplementation?: HTTPModelProviderFetch;
+}
+
+export interface OllamaHealthResult {
+  reachable: boolean;
+  modelAvailable: boolean;
+  providerVersion?: string;
+  checkedAt: Date;
+  errors: AgentOSError[];
+  metadata?: AgentOSMetadata;
+}
+
+export interface OllamaProvider {
+  id: string;
+  name: string;
+  generate(request: ModelGenerationRequest): Promise<ModelGenerationResponse>;
+  inspect(): {
+    id: string;
+    name: string;
+    description?: string;
+    version: string;
+    tags: string[];
+    capabilities: string[];
+    generationSignature: "generate(request)";
+    metadata?: AgentOSMetadata;
+  };
+  summary(): {
+    id: string;
+    name: string;
+    description?: string;
+    version: string;
+    capabilities: string[];
+    tags: string[];
+  };
+  health(): Promise<OllamaHealthResult>;
+}
+
 interface HTTPBodyResult {
   text: string;
   bytesRead: number;
 }
 
+interface OllamaHTTPResult {
+  json: unknown;
+  status: number;
+  headers: Record<string, string>;
+  durationMs: number;
+  bytesRead: number;
+}
+
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024;
+const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434";
 const JSON_CONTENT_TYPES = ["application/json", "application/problem+json"];
 const SENSITIVE_HEADER_NAMES = new Set([
   "authorization",
@@ -424,6 +485,96 @@ class OpenAICompatibleAdapter implements HTTPModelProviderAdapter {
   }
 }
 
+class OllamaNativeAdapter implements HTTPModelProviderAdapter {
+  readonly name = "ollama-native";
+
+  constructor(private readonly model: string) {}
+
+  buildRequest(request: ModelGenerationRequest): HTTPModelProviderRequest {
+    return {
+      path: "/api/generate",
+      method: "POST",
+      body: {
+        model: this.model,
+        prompt: request.prompt,
+        system: request.systemPrompt,
+        stream: false,
+        options: {
+          temperature: request.temperature,
+          num_predict: request.maxTokens,
+          num_ctx: readOptionalNumber(asRecord(request.metadata).contextWindow),
+        },
+      },
+    };
+  }
+
+  parseResponse(input: HTTPModelProviderAdapterResponse): ModelGenerationResponse {
+    const response = asRecord(input.json);
+    const text = typeof response.response === "string" ? response.response : "";
+
+    if (!text) {
+      throw createTransportError(
+        "ollama_provider_invalid_response",
+        "Ollama response did not include generated text."
+      );
+    }
+
+    return {
+      text,
+      usage: this.normalizeUsage(response),
+      finishReason: this.normalizeFinishReason(response.done_reason),
+      provider: "ollama",
+      model: typeof response.model === "string" ? response.model : this.model,
+      durationMs: input.durationMs,
+      metadata: {
+        status: input.status,
+        done: typeof response.done === "boolean" ? response.done : undefined,
+        totalDurationNs: readOptionalNumber(response.total_duration),
+        loadDurationNs: readOptionalNumber(response.load_duration),
+        promptEvalDurationNs: readOptionalNumber(response.prompt_eval_duration),
+        evalDurationNs: readOptionalNumber(response.eval_duration),
+      },
+    };
+  }
+
+  normalizeFinishReason(finishReason: unknown): ModelFinishReason | string {
+    if (finishReason === "stop") {
+      return ModelFinishReason.Stop;
+    }
+
+    if (finishReason === "length") {
+      return ModelFinishReason.Length;
+    }
+
+    if (typeof finishReason === "string") {
+      return finishReason;
+    }
+
+    return ModelFinishReason.Unknown;
+  }
+
+  normalizeUsage(response: Record<string, unknown>): ModelUsage | undefined {
+    const inputTokens = readOptionalNumber(response.prompt_eval_count);
+    const outputTokens = readOptionalNumber(response.eval_count);
+
+    if (inputTokens === undefined && outputTokens === undefined) {
+      return undefined;
+    }
+
+    return {
+      inputTokens,
+      outputTokens,
+      totalTokens:
+        inputTokens !== undefined && outputTokens !== undefined
+          ? inputTokens + outputTokens
+          : undefined,
+      metadata: {
+        provider: "ollama",
+      },
+    };
+  }
+}
+
 export function createOpenAICompatibleProvider(options: OpenAICompatibleProviderOptions) {
   const transport =
     options.transport instanceof HTTPModelProviderBase
@@ -452,6 +603,228 @@ export function createOpenAICompatibleProvider(options: OpenAICompatibleProvider
       return transport.generate(request, adapter);
     },
   });
+}
+
+export function createOllamaProvider(options: OllamaProviderOptions): OllamaProvider {
+  const baseUrl = normalizeOllamaBaseUrl(options.baseUrl ?? DEFAULT_OLLAMA_BASE_URL);
+  const allowRemote = options.allowRemote ?? false;
+  const baseURL = new URL(baseUrl);
+
+  if (!allowRemote && !isLocalhost(baseURL.hostname)) {
+    throw createTransportError(
+      "ollama_provider_remote_disabled",
+      "Ollama remote endpoints require allowRemote: true."
+    );
+  }
+
+  const transport = new HTTPModelProviderBase({
+    baseUrl,
+    timeoutMs: options.timeoutMs,
+    maxResponseBytes: options.maxResponseBytes,
+    allowLocalhost: true,
+    credential: options.credential,
+    credentialResolver: options.credentialResolver,
+    fetchImplementation: options.fetchImplementation,
+    userAgent: "AgentOS-OllamaProvider/0.1",
+  });
+  const adapter = new OllamaNativeAdapter(options.model);
+  const provider = defineModelProvider({
+    id: options.id ?? "ollama",
+    name: options.name ?? "Ollama Provider",
+    description: options.description ?? "Native local Ollama provider for AgentOS.",
+    version: options.version ?? "1.0.0",
+    capabilities: options.capabilities ?? [
+      ModelProviderCapability.TextGeneration,
+      ModelProviderCapability.Reasoning,
+      ModelProviderCapability.StructuredOutput,
+      "local",
+      "ollama",
+    ],
+    tags: options.tags ?? ["ollama", "local", "open-models"],
+    metadata: {
+      model: options.model,
+      baseUrl,
+      localFirst: !allowRemote,
+      remote: !isLocalhost(baseURL.hostname),
+      credential: redactCredentialReference(options.credential),
+      ...options.metadata,
+    },
+    generate(request) {
+      return transport.generate(request, adapter);
+    },
+  });
+
+  return Object.freeze({
+    ...provider,
+    async health(): Promise<OllamaHealthResult> {
+      return checkOllamaHealth({
+        baseUrl,
+        model: options.model,
+        timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        maxResponseBytes: options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES,
+        fetchImplementation: options.fetchImplementation ?? fetch,
+      });
+    },
+  }) as OllamaProvider;
+}
+
+async function checkOllamaHealth(options: {
+  baseUrl: string;
+  model: string;
+  timeoutMs: number;
+  maxResponseBytes: number;
+  fetchImplementation: HTTPModelProviderFetch;
+}): Promise<OllamaHealthResult> {
+  const checkedAt = new Date();
+  const errors: AgentOSError[] = [];
+  let providerVersion: string | undefined;
+  let modelAvailable = false;
+
+  try {
+    const tags = await fetchOllamaJson({
+      ...options,
+      path: "/api/tags",
+    });
+    const tagsRecord = asRecord(tags.json);
+    const models: unknown[] = Array.isArray(tagsRecord.models) ? tagsRecord.models : [];
+    modelAvailable = models.some((model) => asRecord(model).name === options.model);
+  } catch (error) {
+    errors.push(normalizeTransportError(error));
+  }
+
+  try {
+    const version = await fetchOllamaJson({
+      ...options,
+      path: "/api/version",
+    });
+    const versionValue = asRecord(version.json).version;
+    providerVersion = typeof versionValue === "string" ? versionValue : undefined;
+  } catch {
+    // Version endpoint is useful when available, but health should not fail hard without it.
+  }
+
+  return {
+    reachable: errors.length === 0,
+    modelAvailable,
+    providerVersion,
+    checkedAt,
+    errors,
+    metadata: {
+      model: options.model,
+      baseUrl: options.baseUrl,
+    },
+  };
+}
+
+async function fetchOllamaJson(options: {
+  baseUrl: string;
+  path: string;
+  timeoutMs: number;
+  maxResponseBytes: number;
+  fetchImplementation: HTTPModelProviderFetch;
+}): Promise<OllamaHTTPResult> {
+  const startedAt = Date.now();
+  const url = new URL(options.path, options.baseUrl);
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(createTransportError("ollama_provider_timeout", "Ollama request exceeded timeout."));
+      }, options.timeoutMs);
+    });
+    const response = await Promise.race([
+      options.fetchImplementation(url, {
+        method: "GET",
+        redirect: "manual",
+        headers: {
+          accept: "application/json",
+          "user-agent": "AgentOS-OllamaProvider/0.1",
+        },
+        signal: controller.signal,
+      }),
+      timeout,
+    ]);
+
+    if (response.status >= 300 && response.status < 400) {
+      throw createTransportError(
+        "ollama_provider_redirect_denied",
+        "Ollama redirects are not allowed."
+      );
+    }
+
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (!isJsonContentType(contentType)) {
+      throw createTransportError(
+        "ollama_provider_invalid_content_type",
+        "Ollama response must be JSON.",
+        {
+          contentType,
+          status: response.status,
+        }
+      );
+    }
+
+    const body = await readResponseBody(response, options.maxResponseBytes);
+    let json: unknown;
+
+    try {
+      json = JSON.parse(body.text);
+    } catch {
+      throw createTransportError(
+        "ollama_provider_invalid_json",
+        "Ollama response was not valid JSON."
+      );
+    }
+
+    if (!response.ok) {
+      throw createTransportError(
+        "ollama_provider_status_error",
+        `Ollama returned HTTP ${response.status}.`,
+        {
+          status: response.status,
+          statusText: response.statusText,
+        }
+      );
+    }
+
+    return {
+      json,
+      status: response.status,
+      headers: safeHeaders(response.headers),
+      durationMs: Date.now() - startedAt,
+      bytesRead: body.bytesRead,
+    };
+  } catch (error) {
+    throw normalizeTransportError(error);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+function normalizeOllamaBaseUrl(input: string): string {
+  const url = new URL(input);
+
+  if (!isAllowedProtocol(url, true)) {
+    throw createTransportError(
+      "ollama_provider_insecure_base_url",
+      "Ollama baseUrl must use localhost HTTP or HTTPS."
+    );
+  }
+
+  if (url.username || url.password) {
+    throw createTransportError(
+      "ollama_provider_credentials_in_url_denied",
+      "Ollama baseUrl must not include credentials."
+    );
+  }
+
+  return url.toString();
 }
 
 async function readResponseBody(

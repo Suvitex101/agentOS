@@ -14,17 +14,17 @@ their first local agent.
 
 ## Package Decisions
 
-| Package               | Decision        | Reason                                                                          |
-| --------------------- | --------------- | ------------------------------------------------------------------------------- |
-| `@agentos/sdk`        | Publishable now | Primary public entry point for alpha developers.                                |
-| `@agentos/core`       | Publishable now | Required runtime, registry, planner, resolver, and authoring APIs used by SDK.  |
-| `@agentos/types`      | Publishable now | Shared domain types required by all public packages.                            |
-| `@agentos/memory`     | Publishable now | Provides public memory contracts and in-memory implementation used by SDK.      |
-| `@agentos/connectors` | Publishable now | Provides Filesystem, HTTP, and GitHub connectors exposed through SDK.           |
-| `@agentos/providers`  | Publishable now | Provides provider foundation and OpenAI-compatible adapter exposed through SDK. |
-| `@agentos/tools`      | Private         | Placeholder package; not enough public behavior to publish honestly.            |
-| `@agentos/config`     | Private         | Internal shared TypeScript configuration, not a runtime package.                |
-| `@agentos/web`        | Private         | Future dashboard app, not a public npm package.                                 |
+| Package               | Decision        | Reason                                                                                            |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| `@agentos/sdk`        | Publishable now | Primary public entry point for alpha developers.                                                  |
+| `@agentos/core`       | Publishable now | Required runtime, registry, planner, resolver, and authoring APIs used by SDK.                    |
+| `@agentos/types`      | Publishable now | Shared domain types required by all public packages.                                              |
+| `@agentos/memory`     | Publishable now | Provides public memory contracts and in-memory implementation used by SDK.                        |
+| `@agentos/connectors` | Publishable now | Provides Filesystem, HTTP, and GitHub connectors exposed through SDK.                             |
+| `@agentos/providers`  | Publishable now | Provides provider foundation, OpenAI-compatible adapter, and Ollama provider exposed through SDK. |
+| `@agentos/tools`      | Private         | Placeholder package; not enough public behavior to publish honestly.                              |
+| `@agentos/config`     | Private         | Internal shared TypeScript configuration, not a runtime package.                                  |
+| `@agentos/web`        | Private         | Future dashboard app, not a public npm package.                                                   |
 
 ## Versioning
 
