@@ -99,21 +99,26 @@ for the current implementation boundary.
 ## Repository Structure
 
 ```text
+.github/
+  workflows/       GitHub Actions CI
+
 apps/
-  web/          Next.js shell for the future dashboard and developer console
+  web/             Next.js dashboard shell for future product work
 
 packages/
-  core/         Planner, execution, registry, tool/connector authoring, and agents
-  memory/       Memory contracts and in-memory store
-  sdk/          Developer-facing exports
-  types/        Shared TypeScript domain and architecture types
-  tools/        Placeholder for future tool helpers
-  connectors/  Filesystem, HTTP, and GitHub connector implementations
-  config/       Shared TypeScript configuration
+  sdk/             Primary public SDK entry point
+  core/            Agent runtime, planners, registry, resolvers, and authoring APIs
+  types/           Shared domain, architecture, security, and provider types
+  memory/          Memory contracts and in-memory memory store
+  connectors/     Filesystem, HTTP, and GitHub connector implementations
+  providers/      Model provider foundation, OpenAI-compatible adapter, and Ollama provider
+  config/          Shared TypeScript configuration
+  tools/           Private placeholder for future tool helpers
 
-examples/       Runnable local examples
-tests/          Unit, integration, and example verification tests
-docs/           Contributor-focused documentation
+examples/          Runnable examples for agents, tools, connectors, providers, and memory
+tests/             Unit, integration, evaluation, and example verification tests
+docs/              Architecture, security, release, grant, and contributor documentation
+scripts/           Release, package, and boundary validation scripts
 ```
 
 ## Quickstart
