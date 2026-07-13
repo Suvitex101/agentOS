@@ -31,6 +31,7 @@
     "test:examples": "vitest run tests/examples",
     "test:evaluation": "vitest run tests/evaluation",
     "test:package-install": "node scripts/test-package-install.mjs",
+    "test:published-package": "node scripts/test-published-package.mjs",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

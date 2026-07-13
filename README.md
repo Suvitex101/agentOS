@@ -29,6 +29,8 @@ ecosystem, database-backed memory, or dashboard functionality.
 - [Architecture](ARCHITECTURE.md): technical reference for how AgentOS works.
 - [Architecture Diagram](docs/architecture-diagram.md): visual overview of the
   current local flow.
+- [Quickstart](docs/quickstart.md): install the published SDK and run your first
+  deterministic agent.
 - [API Reference](docs/api-reference.md): starter reference for public SDK
   exports.
 - [Connector Security](docs/security/connector-security.md): security metadata,
@@ -49,13 +51,8 @@ ecosystem, database-backed memory, or dashboard functionality.
   for model-generated plans.
 - [Planner Prompts](docs/planner-prompts.md): versioned prompt assets for
   model-assisted planning.
-- [Release Package Strategy](docs/release/package-strategy.md): alpha package
-  decisions and publishability audit.
-- [Public API Surface](docs/release/public-api-surface.md): intended
-  `@agentosdev/sdk` alpha exports.
-- [Changelog](CHANGELOG.md): release history and alpha candidate notes.
+- [Changelog](CHANGELOG.md): release history and alpha notes.
 - [Examples](examples): runnable local examples.
-- [Grant Readiness Docs](docs/grant): supporting material for grant review.
 - [Contributing](CONTRIBUTING.md): development workflow and contribution guide.
 - [First Contribution](docs/first-contribution.md): step-by-step onboarding for
   new contributors.
@@ -82,6 +79,41 @@ Read the deeper documents:
   existing AI frameworks.
 - [ARCHITECTURE.md](ARCHITECTURE.md): how the task-centric architecture works.
 
+## Release Status
+
+AgentOS is live on npm as an alpha release.
+
+- Current version: `0.1.0-alpha.1`
+- Release channel: `alpha`
+- Recommended package: `@agentosdev/sdk`
+- GitHub repository: [Suvitex101/agentOS](https://github.com/Suvitex101/agentOS)
+
+Install the SDK:
+
+```bash
+npm install @agentosdev/sdk@alpha
+```
+
+Equivalent commands:
+
+```bash
+pnpm add @agentosdev/sdk@alpha
+yarn add @agentosdev/sdk@alpha
+```
+
+`@agentosdev/sdk` is the recommended entry point. Advanced packages such as
+`@agentosdev/core`, `@agentosdev/types`, `@agentosdev/connectors`,
+`@agentosdev/providers`, and `@agentosdev/memory` are available separately when
+you need lower-level package boundaries.
+
+Alpha maturity: AgentOS is ready for local experimentation, examples,
+contribution, and early integration feedback. It is not yet a production
+distributed runtime.
+
+See the [changelog](CHANGELOG.md),
+[issue tracker](https://github.com/Suvitex101/agentOS/issues), and
+[contributing guide](CONTRIBUTING.md).
+
 ## Current Limitations
 
 AgentOS is an early local-first foundation:
@@ -93,8 +125,7 @@ AgentOS is an early local-first foundation:
 - no persistent database-backed memory exists yet
 - the dashboard shell is not production-ready yet
 
-See [ROADMAP.md](ROADMAP.md) and [docs/grant/current-capabilities.md](docs/grant/current-capabilities.md)
-for the current implementation boundary.
+See [ROADMAP.md](ROADMAP.md) for the current implementation boundary.
 
 ## Repository Structure
 
@@ -117,28 +148,31 @@ packages/
 
 examples/          Runnable examples for agents, tools, connectors, providers, and memory
 tests/             Unit, integration, evaluation, and example verification tests
-docs/              Architecture, security, release, grant, and contributor documentation
+docs/              Architecture, security, provider, connector, and contributor documentation
 scripts/           Release, package, and boundary validation scripts
 ```
 
 ## Quickstart
 
-Install dependencies:
+For a fresh project, install the published SDK:
+
+```bash
+npm install @agentosdev/sdk@alpha
+```
+
+Then follow [docs/quickstart.md](docs/quickstart.md) to create a minimal agent,
+run a deterministic task, and inspect the result.
+
+For repository contributors, install dependencies:
 
 ```bash
 pnpm install
 ```
 
-Run the basic example:
+Then run the basic local example:
 
 ```bash
 pnpm example:basic
-```
-
-Run the custom tool example:
-
-```bash
-pnpm example:custom-tool
 ```
 
 Run the research connector example:
@@ -788,9 +822,8 @@ pnpm release:check
 tarballs, installs them into a temporary project outside the monorepo, imports
 from `@agentosdev/sdk`, and runs a deterministic agent workflow.
 
-See [docs/release/package-strategy.md](docs/release/package-strategy.md),
-[docs/release/public-api-surface.md](docs/release/public-api-surface.md), and
-[docs/release/release-checklist.md](docs/release/release-checklist.md).
+See [CHANGELOG.md](CHANGELOG.md) and [docs/quickstart.md](docs/quickstart.md)
+for the public alpha release notes and installation path.
 
 ## CI
 

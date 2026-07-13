@@ -7,7 +7,7 @@ Most developers should import memory utilities from `@agentosdev/sdk`.
 ## Install
 
 ```bash
-npm install @agentosdev/memory
+npm install @agentosdev/memory@alpha
 ```
 
 ## Purpose
@@ -26,6 +26,18 @@ It does not include database storage, vector search, or embedding generation.
 `@agentosdev/sdk` re-exports `InMemoryMemoryStore` and memory types. Use this
 package directly when building an alternative memory provider.
 
+## Minimal Import
+
+```ts
+import { InMemoryMemoryStore } from "@agentosdev/memory";
+```
+
 ## Alpha Status
 
 The current memory layer is local and in-memory only.
+
+## Links
+
+- Repository: https://github.com/Suvitex101/agentOS
+- Issues: https://github.com/Suvitex101/agentOS/issues
+- License: Apache-2.0

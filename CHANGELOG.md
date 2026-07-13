@@ -12,7 +12,7 @@ developer feedback, architectural review, and deterministic local experimentatio
 
 ## 0.1.0-alpha.1
 
-Initial public alpha candidate.
+Initial public alpha release.
 
 Implemented areas:
 

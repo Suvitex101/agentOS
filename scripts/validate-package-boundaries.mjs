@@ -60,7 +60,7 @@ for (const sourceFile of listFiles(path.join(root, "packages"), ".ts")) {
   const relative = path.relative(root, sourceFile);
 
   expect(
-    !/@agentos\/[^"']+\/src\b/.test(contents),
+    !/@agentosdev\/[^"']+\/src\b/.test(contents),
     `${relative} imports another package private src path`
   );
 }
